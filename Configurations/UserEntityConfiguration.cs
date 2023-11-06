@@ -2,15 +2,17 @@ using ApiAryanakala.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace ApiAryanakala.Configurations;
-
-public class UserEntityConfiguration : IEntityTypeConfiguration<User>
+namespace ApiAryanakala.Configurations
 {
-    public void Configure(EntityTypeBuilder<User> builder)
+    public class UserEntityConfiguration : IEntityTypeConfiguration<User>
     {
-        builder.ToTable("Users");
-        builder.HasKey(s => s.Id);
-        builder.Property(p => p.UserName).HasMaxLength(64);
+        public void Configure(EntityTypeBuilder<User> builder)
+        {
+            builder.ToTable("Users");
+            builder.HasKey(s => s.Id);
+            builder.Property(p => p.UserName).HasMaxLength(64);
+        }
+
     }
 
 }

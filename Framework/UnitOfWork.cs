@@ -1,24 +1,26 @@
 using ApiAryanakala.Data;
 using ApiAryanakala.Interfaces;
 
-namespace ApiAryanakala.Framework;
-
-public class UnitOfWork : IUnitOfWork
+namespace ApiAryanakala.Framework
 {
-    private readonly ApplicationDbContext applicationDbContext;
-
-    public UnitOfWork(ApplicationDbContext applicationDbContext)
+    public class UnitOfWork : IUnitOfWork
     {
-        this.applicationDbContext = applicationDbContext;
+        private readonly ApplicationDbContext applicationDbContext;
+
+        public UnitOfWork(ApplicationDbContext applicationDbContext)
+        {
+            this.applicationDbContext = applicationDbContext;
+        }
+
+        public void Dispose()
+        {
+            applicationDbContext.Dispose();
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await applicationDbContext.SaveChangesAsync();
+        }
     }
 
-    public void Dispose()
-    {
-        applicationDbContext.Dispose();
-    }
-
-    public async Task<int> SaveChangesAsync()
-    {
-        return await applicationDbContext.SaveChangesAsync();
-    }
 }

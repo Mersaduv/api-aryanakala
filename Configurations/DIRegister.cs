@@ -2,104 +2,112 @@ using System.Text;
 using ApiAryanakala.Framework;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Models;
+using ApiAryanakala.Services.Auth;
 using ApiAryanakala.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-namespace ApiAryanakala;
-
-public static class DIRegister
+namespace ApiAryanakala
 {
-    // public static void AddRepositories(this IServiceCollection services)
-    // {
-    //     services.AddScoped<IProductRepository, ProductRepository>();
-    //     //services.AddScoped<IProductRepository, ProductRepository>();
-    //     //services.AddScoped<IProductRepository, ProductRepository>();
-    //     //services.AddScoped<IProductRepository, ProductRepository>();
-    //     //services.AddScoped<IProductRepository, ProductRepository>();
-    //     //services.AddScoped<IProductRepository, ProductRepository>();
-    // }
-
-    public static void AddUnitOfWork(this IServiceCollection services)
+    public static class DIRegister
     {
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-    }
+        // public static void AddRepositories(this IServiceCollection services)
+        // {
+        //     services.AddScoped<IProductRepository, ProductRepository>();
+        //     //services.AddScoped<IProductRepository, ProductRepository>();
+        //     //services.AddScoped<IProductRepository, ProductRepository>();
+        //     //services.AddScoped<IProductRepository, ProductRepository>();
+        //     //services.AddScoped<IProductRepository, ProductRepository>();
+        //     //services.AddScoped<IProductRepository, ProductRepository>();
+        // }
 
-    public static void AddInfraUtility(this IServiceCollection services)
-    {
-        services.AddSingleton<EncryptionUtility>();
-    }
-
-    public static IServiceCollection AddJWT(this IServiceCollection services)
-    {
-        var sp = services.BuildServiceProvider();
-        Configs configs = sp.GetService<IOptions<Configs>>().Value;
-        var key = Encoding.UTF8.GetBytes(configs.TokenKey);
-
-        services.AddAuthentication(x =>
+        public static void AddUnitOfWork(this IServiceCollection services)
         {
-            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(x =>
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+        }
+
+        public static void AddInfraUtility(this IServiceCollection services)
         {
-            x.RequireHttpsMetadata = false;
-            x.SaveToken = true;
-            x.TokenValidationParameters = new TokenValidationParameters
+            services.AddSingleton<EncryptionUtility>();
+        }
+
+        public static void AddServices(this IServiceCollection services)
+        {
+            services.AddSingleton<AuthService>();
+        }
+
+        public static IServiceCollection AddJWT(this IServiceCollection services)
+        {
+            var sp = services.BuildServiceProvider();
+            Configs configs = sp.GetService<IOptions<Configs>>().Value;
+            var key = Encoding.UTF8.GetBytes(configs.TokenKey);
+
+            services.AddAuthentication(x =>
             {
-                ClockSkew = TimeSpan.FromMinutes(configs.TokenTimeout),
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false
-            };
-        });
-
-        return services;
-    }
-
-    public static IServiceCollection AddSwagger(this IServiceCollection services)
-    {
-        services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new OpenApiInfo
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
             {
-                Version = "v1",
-                Title = "Api Aryanakala",
-                Description = "Api Aryanakala - Version01",
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ClockSkew = TimeSpan.FromMinutes(configs.TokenTimeout),
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
             });
 
-            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme = "Bearer",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-            });
+            return services;
+        }
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        public static IServiceCollection AddSwagger(this IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    new OpenApiSecurityScheme
+                    Version = "v1",
+                    Title = "Api Aryanakala",
+                    Description = "Api Aryanakala - Version01",
+                });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
                     {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
                     },
-                    new string[] { }
-                }
-            });
+                    Scheme = "Bearer",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                });
 
-            c.EnableAnnotations();
-        });
-        return services;
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+
+                c.EnableAnnotations();
+            });
+            return services;
+        }
     }
+
 }

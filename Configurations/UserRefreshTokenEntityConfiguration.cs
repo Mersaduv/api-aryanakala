@@ -2,16 +2,18 @@ using ApiAryanakala.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace ApiAryanakala.Configurations;
-
-public class UserRefreshTokenEntityConfiguration : IEntityTypeConfiguration<UserRefreshToken>
+namespace ApiAryanakala.Configurations
 {
-    public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
+    public class UserRefreshTokenEntityConfiguration : IEntityTypeConfiguration<UserRefreshToken>
     {
-        builder.ToTable("UserRefreshTokens");
-        builder.HasKey(s => s.Id);
+        public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
+        {
+            builder.ToTable("UserRefreshTokens");
+            builder.HasKey(s => s.Id);
 
-        builder.Property(p => p.RefreshToken)
-              .HasMaxLength(128);
+            builder.Property(p => p.RefreshToken)
+                  .HasMaxLength(128);
+        }
     }
+
 }

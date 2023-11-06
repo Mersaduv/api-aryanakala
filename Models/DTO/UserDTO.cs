@@ -1,8 +1,10 @@
-﻿namespace ApiAryanakala.Models.DTO;
-
-public class UserDTO
+﻿namespace ApiAryanakala.Models.DTO
 {
-    public string Id { get; set; }
-    public string UserName { get; set; }
-    public string Name { get; set; }
+    public class UserDTO
+    {
+        public string Id { get; set; }
+        public string UserName { get; set; }
+        public string Name { get; set; }
+    }
 }
+

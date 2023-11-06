@@ -6,54 +6,31 @@ using ApiAryanakala.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace ApiAryanakala.Utility;
-
-public class EncryptionUtility
+namespace ApiAryanakala.Utility
 {
-    private readonly Configs configs;
+    public class EncryptionUtility
+    {
+        private readonly Configs configs;
 
-    public EncryptionUtility(IOptions<Configs> options)
-    {
-        this.configs = options.Value;
-    }
-    public string GetSHA256(string password, string salt)
-    {
-        using (var sha256 = SHA256.Create())
+        public EncryptionUtility(IOptions<Configs> options)
         {
-            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password + salt));
-            var hash = BitConverter.ToString(bytes).Replace("-", "").ToLower();
-            return hash;
+            this.configs = options.Value;
         }
-    }
-
-    public string GetNewSalt()
-    {
-        return Guid.NewGuid().ToString();
-    }
-
-    public string GetNewRefreshToken()
-    {
-        return Guid.NewGuid().ToString();
-    }
-
-    public string GetNewToken(Guid userId)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(configs.TokenKey);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        public string GetSHA256(string password, string salt)
         {
-            Subject = new ClaimsIdentity(new Claim[]
+            using (var sha256 = SHA256.Create())
             {
-                        new Claim("userId", userId.ToString()),
-            }),
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password + salt));
+                var hash = BitConverter.ToString(bytes).Replace("-", "").ToLower();
+                return hash;
+            }
+        }
 
-            Expires = DateTime.Now.AddMinutes(configs.TokenTimeout),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
+        public string GetNewSalt()
+        {
+            return Guid.NewGuid().ToString();
+        }
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
     }
 
 }

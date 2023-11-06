@@ -1,7 +1,9 @@
-namespace ApiAryanakala.Models.DTO;
-
-public class GenerateNewTokenDTO
+namespace ApiAryanakala.Models.DTO
 {
-    public string Token { get; set; }
-    public string RefreshToken { get; set; }
+    public class GenerateNewTokenDTO
+    {
+        public string Token { get; set; }
+        public string RefreshToken { get; set; }
+    }
+
 }

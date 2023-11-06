@@ -1,7 +1,9 @@
-namespace ApiAryanakala.Endpoints;
-
-public class ProductEndpoints
+namespace ApiAryanakala.Endpoints
 {
+    public class ProductEndpoints
+    {
 
+
+    }
 
 }

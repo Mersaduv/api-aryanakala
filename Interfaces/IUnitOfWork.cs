@@ -1,6 +1,7 @@
-﻿namespace ApiAryanakala.Interfaces;
-
-public interface IUnitOfWork : IDisposable
+﻿namespace ApiAryanakala.Interfaces
 {
-    Task<int> SaveChangesAsync();
+    public interface IUnitOfWork : IDisposable
+    {
+        Task<int> SaveChangesAsync();
+    }
 }
