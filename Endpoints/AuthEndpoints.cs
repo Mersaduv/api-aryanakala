@@ -98,7 +98,7 @@ namespace ApiAryanakala.Endpoints
                 Id = Guid.NewGuid(),
                 Password = hashPassowrd,
                 PasswordSalt = salt,
-                RegisterDate = DateTime.Now,
+                RegisterDate = DateTime.UtcNow,
                 UserName = model.UserName
             };
 

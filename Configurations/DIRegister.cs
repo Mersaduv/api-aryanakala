@@ -1,7 +1,9 @@
 using System.Text;
 using ApiAryanakala.Framework;
 using ApiAryanakala.Interfaces;
+using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Models;
+using ApiAryanakala.Repository;
 using ApiAryanakala.Services.Auth;
 using ApiAryanakala.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,15 +15,15 @@ namespace ApiAryanakala
 {
     public static class DIRegister
     {
-        // public static void AddRepositories(this IServiceCollection services)
-        // {
-        //     services.AddScoped<IProductRepository, ProductRepository>();
-        //     //services.AddScoped<IProductRepository, ProductRepository>();
-        //     //services.AddScoped<IProductRepository, ProductRepository>();
-        //     //services.AddScoped<IProductRepository, ProductRepository>();
-        //     //services.AddScoped<IProductRepository, ProductRepository>();
-        //     //services.AddScoped<IProductRepository, ProductRepository>();
-        // }
+        public static void AddRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IProductRepository, ProductRepository>();
+            //services.AddScoped<IProductRepository, ProductRepository>();
+            //services.AddScoped<IProductRepository, ProductRepository>();
+            //services.AddScoped<IProductRepository, ProductRepository>();
+            //services.AddScoped<IProductRepository, ProductRepository>();
+            //services.AddScoped<IProductRepository, ProductRepository>();
+        }
 
         public static void AddUnitOfWork(this IServiceCollection services)
         {

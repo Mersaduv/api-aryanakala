@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ApiAryanakala.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApiAryanakala.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231112182450_InitEntityConfig")]
+    partial class InitEntityConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,13 +60,6 @@ namespace ApiAryanakala.Migrations
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("Created")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -80,9 +76,6 @@ namespace ApiAryanakala.Migrations
 
                     b.Property<long>("InfoId")
                         .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("LastUpdated")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<double>("Price")
                         .HasColumnType("double precision");

@@ -1,8 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+namespace ApiAryanakala.Models.DTO.ProductDto;
 
-namespace ApiAryanakala.Entities;
-
-public class Product
+public class ProductDTO
 {
     public Guid Id { get; set; }
     public string Title { get; set; }
@@ -14,21 +12,10 @@ public class Product
     public List<string> Images { get; set; }
     public List<string> Category { get; set; }
     public List<string> Size { get; set; }
-    public List<Info> Info { get; set; }
-    public long InfoId { get; internal set; }
+    public List<InfoDto> Info { get; set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }
     public double Rating { get; set; }
     public DateTime? Created { get; set; }
     public DateTime? LastUpdated { get; set; }
-}
-
-
-public class Info
-{
-    public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
-    public string Title { get; set; }
-    public string Value { get; set; }
-    public Product Products { get; set; }
 }
