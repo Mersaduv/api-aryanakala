@@ -1,4 +1,5 @@
 using ApiAryanakala;
+using ApiAryanakala.CustomAttributes;
 using ApiAryanakala.Data;
 using ApiAryanakala.Endpoints;
 using ApiAryanakala.Models;
@@ -45,7 +46,11 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddJWT();
 builder.Services.AddSwagger();
 builder.Services.AddCors();
+builder.Services.AddApplicationServices();
 
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -55,10 +60,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+// app.UseCors(b => b.AllowAnyOrigin());
 
-// app.UseAuthentication();
-// app.UseAuthorization();
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+
 
 app.ConfigureAuthEndpoints();
 app.ConfigureProductEndpoints();

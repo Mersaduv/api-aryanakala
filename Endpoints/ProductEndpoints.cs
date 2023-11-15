@@ -16,19 +16,24 @@ namespace ApiAryanakala.Endpoints
         public static void ConfigureProductEndpoints(this WebApplication app)
         {
             app.MapGet("/api/products", GetAllProduct)
+            .RequireAuthorization()
             .WithName("GetProducts").Produces<APIResponse>(200);
             app.MapGet("/api/product/{id:guid}", GetProduct)
             .WithName("GetProduct").AddEndpointFilter<ValidationFilter<Guid>>()
             .Produces<APIResponse>(200);
 
             app.MapPost("/api/product", CreateProduct)
+            .RequireAuthorization()
+            .Produces(401)
+            .Produces<APIResponse>(201)
+            .Produces(400)
             .AddEndpointFilter<ValidationFilter<ProductCreateDTO>>()
             .ProducesValidationProblem()
             .WithName("CreateProduct")
-            .Accepts<ProductCreateDTO>("application/json")
-            .Produces<APIResponse>(201)
-            .Produces(400);
+            .Accepts<ProductCreateDTO>("application/json");
+
             app.MapPut("/api/product", UpdateProduct)
+            .RequireAuthorization()
             .WithName("UpdateProduct")
             .AddEndpointFilter<ValidationFilter<Guid>>()
             .AddEndpointFilter<ValidationFilter<ProductUpdateDTO>>()
@@ -37,17 +42,20 @@ namespace ApiAryanakala.Endpoints
             .Produces<APIResponse>(200).Produces(400);
 
             app.MapDelete("/api/product/{id:guid}", DeleteProduct)
+            .RequireAuthorization()
             .AddEndpointFilter<ValidationFilter<Guid>>()
             .ProducesValidationProblem()
             .Produces(204).Produces(400);
         }
 
         //Write
-        // [Authorize]
         private async static Task<IResult> CreateProduct(IProductRepository _productRepo,
-                 [FromBody] ProductCreateDTO product_C_DTO, IUnitOfWork unitOfWork)
+                      [FromBody] ProductCreateDTO product_C_DTO, IUnitOfWork unitOfWork, ILogger<Program> _logger, HttpContext context)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
+            _logger.Log(LogLevel.Information, "Create Product");
+
+            await AccessControl.CheckProductAddPermission(context);
 
             if (_productRepo.GetAsync(product_C_DTO.Title).GetAwaiter().GetResult() != null)
             {
@@ -64,13 +72,16 @@ namespace ApiAryanakala.Endpoints
             response.Result = productDTO;
             response.IsSuccess = true;
             response.StatusCode = HttpStatusCode.Created;
-            return Results.Ok(response); ;
+            return Results.Ok(response);
         }
 
         private async static Task<IResult> UpdateProduct(IProductRepository _productRepo,
-         [FromBody] ProductUpdateDTO product_U_DTO, IUnitOfWork unitOfWork)
+         [FromBody] ProductUpdateDTO product_U_DTO, IUnitOfWork unitOfWork, ILogger<Program> _logger, HttpContext context)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
+            _logger.Log(LogLevel.Information, "Update Product");
+
+            await AccessControl.CheckProductAddPermission(context);
 
             var product = product_U_DTO.ToProduct();
             await _productRepo.UpdateAsync(product);
@@ -94,10 +105,12 @@ namespace ApiAryanakala.Endpoints
             response.StatusCode = HttpStatusCode.OK;
             return Results.Ok(response);
         }
-        private async static Task<IResult> GetAllProduct(IProductRepository _productRepo, ILogger<Program> _logger)
+        private async static Task<IResult> GetAllProduct(IProductRepository _productRepo, ILogger<Program> _logger, HttpContext context)
         {
             APIResponse response = new();
             _logger.Log(LogLevel.Information, "Getting all Products");
+
+            await AccessControl.CheckProductAddPermission(context);
 
             var products = await _productRepo.GetAllAsync();
             response.Result = products.ToProductsResponse();
@@ -106,10 +119,12 @@ namespace ApiAryanakala.Endpoints
             return Results.Ok(response);
         }
 
-        private async static Task<IResult> DeleteProduct(IProductRepository _productRepo, Guid id, IUnitOfWork unitOfWork)
+        private async static Task<IResult> DeleteProduct(IProductRepository _productRepo, Guid id, IUnitOfWork unitOfWork, ILogger<Program> _logger, HttpContext context)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
+            _logger.Log(LogLevel.Information, "Delete Product");
 
+            await AccessControl.CheckProductAddPermission(context);
 
             Product productFromStore = await _productRepo.GetAsync(id);
             if (productFromStore != null)

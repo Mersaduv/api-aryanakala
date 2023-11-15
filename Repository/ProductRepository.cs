@@ -26,27 +26,6 @@ public class ProductRepository : IProductRepository
         var productWithInfo = db.Products.Include(x => x.Info)
         .AsNoTracking()
         .ToListAsync();
-        // .Select(x => new ProductDTO
-        // {
-        //     Id = x.Id,
-        //     Title = x.Title,
-        //     Info = x.Info.Select(infoDto => new InfoDto
-        //     {
-        //         Title = infoDto.Title,
-        //         Value = infoDto.Value,
-        //     }).ToList(),
-        //     Category = x.Category,
-        //     Description = x.Description,
-        //     Discount = x.Discount,
-        //     Images = x.Images,
-        //     InStock = x.InStock,
-        //     Price = x.Price,
-        //     Rating = x.Rating,
-        //     Size = x.Size,
-        //     Slug = x.Slug,
-        //     Sold = x.Sold
-        // })
-
 
         return await productWithInfo;
     }

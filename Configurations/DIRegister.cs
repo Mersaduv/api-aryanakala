@@ -18,11 +18,10 @@ namespace ApiAryanakala
         public static void AddRepositories(this IServiceCollection services)
         {
             services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
+        }
+        public static void AddApplicationServices(this IServiceCollection services)
+        {
+            services.AddScoped<IPermissionService, PermissionService>();
         }
 
         public static void AddUnitOfWork(this IServiceCollection services)

@@ -8,6 +8,6 @@ public class ProductCreateValidation : AbstractValidator<ProductCreateDTO>
     public ProductCreateValidation()
     {
         RuleFor(model => model.Title).NotEmpty();
-        RuleFor(model => model.Discount).InclusiveBetween(1, 100);
+        RuleFor(model => model.Discount).InclusiveBetween(5, 100);
     }
 }

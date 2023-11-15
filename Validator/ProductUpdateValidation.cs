@@ -9,6 +9,6 @@ public class ProductUpdateValidation : AbstractValidator<ProductUpdateDTO>
     {
         RuleFor(model => model.Id).NotEmpty();
         RuleFor(model => model.Title).NotEmpty();
-        RuleFor(model => model.Discount).InclusiveBetween(1, 100);
+        RuleFor(model => model.Discount).InclusiveBetween(5, 100);
     }
 }
