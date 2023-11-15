@@ -3,11 +3,13 @@ using ApiAryanakala.Entities;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDto;
 using Microsoft.AspNetCore.Mvc;
 using ApiAryanakala.Mapper.Query;
 using ApiAryanakala.Mapper.Write;
 using ApiAryanakala.Filter;
+using ApiAryanakala.Data;
+using ApiAryanakala.Utility;
+using ApiAryanakala.Models.DTO.ProductDtos;
 
 namespace ApiAryanakala.Endpoints
 {
@@ -18,6 +20,16 @@ namespace ApiAryanakala.Endpoints
             app.MapGet("/api/products", GetAllProduct)
             .RequireAuthorization()
             .WithName("GetProducts").Produces<APIResponse>(200);
+            app.MapGet("/api/main", async ([AsParameters] RequestQueryParameters parameters, ApplicationDbContext context) =>
+        {
+            var query = context.Products.AsQueryable();
+
+            query = QueryHelpers.BuildQuery(query, parameters);
+
+            var result = await PaginatedList<Product, ProductDTO>.CreateAsync(query, parameters.Page, parameters.PageSize);
+            return result;
+        })
+            .WithName("GetMain").Produces<APIResponse>(200);
             app.MapGet("/api/product/{id:guid}", GetProduct)
             .WithName("GetProduct").AddEndpointFilter<ValidationFilter<Guid>>()
             .Produces<APIResponse>(200);
@@ -55,7 +67,7 @@ namespace ApiAryanakala.Endpoints
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
             _logger.Log(LogLevel.Information, "Create Product");
 
-            await AccessControl.CheckProductAddPermission(context);
+            await AccessControl.CheckProductPermissionFlag(context);
 
             if (_productRepo.GetAsync(product_C_DTO.Title).GetAwaiter().GetResult() != null)
             {
@@ -81,7 +93,7 @@ namespace ApiAryanakala.Endpoints
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
             _logger.Log(LogLevel.Information, "Update Product");
 
-            await AccessControl.CheckProductAddPermission(context);
+            await AccessControl.CheckProductPermissionFlag(context);
 
             var product = product_U_DTO.ToProduct();
             await _productRepo.UpdateAsync(product);
@@ -110,7 +122,7 @@ namespace ApiAryanakala.Endpoints
             APIResponse response = new();
             _logger.Log(LogLevel.Information, "Getting all Products");
 
-            await AccessControl.CheckProductAddPermission(context);
+            await AccessControl.CheckProductPermissionFlag(context);
 
             var products = await _productRepo.GetAllAsync();
             response.Result = products.ToProductsResponse();
@@ -124,7 +136,7 @@ namespace ApiAryanakala.Endpoints
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
             _logger.Log(LogLevel.Information, "Delete Product");
 
-            await AccessControl.CheckProductAddPermission(context);
+            await AccessControl.CheckProductPermissionFlag(context);
 
             Product productFromStore = await _productRepo.GetAsync(id);
             if (productFromStore != null)

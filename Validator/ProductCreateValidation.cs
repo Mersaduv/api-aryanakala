@@ -1,4 +1,4 @@
-using ApiAryanakala.Models.DTO.ProductDto;
+using ApiAryanakala.Models.DTO.ProductDtos;
 using FluentValidation;
 
 namespace ApiAryanakala.Validator;

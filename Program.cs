@@ -1,5 +1,4 @@
 using ApiAryanakala;
-using ApiAryanakala.CustomAttributes;
 using ApiAryanakala.Data;
 using ApiAryanakala.Endpoints;
 using ApiAryanakala.Models;

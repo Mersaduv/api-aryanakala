@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 public class AccessControl
 {
-    public static async Task CheckProductAddPermission(HttpContext context)
+    public static async Task CheckProductPermissionFlag(HttpContext context)
     {
         var userId = Guid.Parse(context.User.Claims.FirstOrDefault(q => q.Type == "userId").Value);
         var permissionService = context.RequestServices.GetRequiredService<IPermissionService>();

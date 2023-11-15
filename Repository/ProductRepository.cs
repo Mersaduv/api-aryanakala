@@ -1,7 +1,7 @@
 using ApiAryanakala.Data;
 using ApiAryanakala.Entities;
 using ApiAryanakala.Interfaces.IRepository;
-using ApiAryanakala.Models.DTO.ProductDto;
+using ApiAryanakala.Models.DTO.ProductDtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiAryanakala.Repository;

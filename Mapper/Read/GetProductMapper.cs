@@ -1,5 +1,5 @@
 using ApiAryanakala.Entities;
-using ApiAryanakala.Models.DTO.ProductDto;
+using ApiAryanakala.Models.DTO.ProductDtos;
 
 namespace ApiAryanakala.Mapper.Query;
 

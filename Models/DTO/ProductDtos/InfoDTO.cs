@@ -1,4 +1,4 @@
-namespace ApiAryanakala.Models.DTO.ProductDto;
+namespace ApiAryanakala.Models.DTO.ProductDtos;
 
 public class InfoDto
 {

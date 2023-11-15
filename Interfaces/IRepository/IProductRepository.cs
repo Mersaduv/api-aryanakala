@@ -1,5 +1,4 @@
 using ApiAryanakala.Entities;
-using ApiAryanakala.Models.DTO.ProductDto;
 
 namespace ApiAryanakala.Interfaces.IRepository;
 

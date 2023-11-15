@@ -1,7 +1,8 @@
-namespace ApiAryanakala.Models.DTO.ProductDto;
+namespace ApiAryanakala.Models.DTO.ProductDtos;
 
-public class ProductCreateDTO
+public class ProductUpdateDTO
 {
+    public Guid Id { get; set; }
     public string Title { get; set; }
     public string Code { get; set; }
     public string Slug { get; set; }
@@ -15,7 +16,6 @@ public class ProductCreateDTO
     public int InStock { get; set; }
     public int? Sold { get; set; }
     public double Rating { get; set; }
-    public DateTime? Created { get; set; }
     public DateTime? LastUpdated { get; set; }
 }
 
