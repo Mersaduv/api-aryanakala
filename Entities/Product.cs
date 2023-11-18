@@ -6,12 +6,12 @@ public class Product
 {
     public Guid Id { get; set; }
     public string Title { get; set; }
+    public List<ProductImage> Images { get; set; }
     public string Code { get; set; }
     public string Slug { get; set; }
     public double Price { get; set; }
     public string Description { get; set; }
     public double? Discount { get; set; }
-    public List<string> Images { get; set; }
     public List<string> Category { get; set; }
     public List<string> Size { get; set; }
     public List<Info> Info { get; set; }

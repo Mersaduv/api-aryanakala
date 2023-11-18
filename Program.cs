@@ -2,12 +2,19 @@ using ApiAryanakala;
 using ApiAryanakala.Data;
 using ApiAryanakala.Endpoints;
 using ApiAryanakala.Models;
+using ApiAryanakala.Utility;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    ApplicationName = typeof(Program).Assembly.FullName,
+    ContentRootPath = Path.GetFullPath(Directory.GetCurrentDirectory()),
+    WebRootPath = Path.GetFullPath(Directory.GetCurrentDirectory()),
+    Args = args
+});
 ConfigurationManager configuration = builder.Configuration;
 
 // Add services to the container.
@@ -49,6 +56,7 @@ builder.Services.AddApplicationServices();
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<ByteFileUtility>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
@@ -62,6 +70,8 @@ if (app.Environment.IsDevelopment())
 // app.UseCors(b => b.AllowAnyOrigin());
 
 app.UseCors();
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

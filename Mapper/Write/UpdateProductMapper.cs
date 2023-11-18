@@ -15,7 +15,6 @@ public static class UpdateProductMapper
             Category = product_U_DTO.Category,
             Description = product_U_DTO.Description,
             Discount = product_U_DTO.Discount,
-            Images = product_U_DTO.Images,
             Info = product_U_DTO.Info.Select(info => new Info
             {
                 Title = info.Title,
@@ -41,7 +40,6 @@ public static class UpdateProductMapper
             Category = product.Category,
             Description = product.Description,
             Discount = product.Discount,
-            Images = product.Images,
             Info = product.Info.Select(infoDto => new InfoDto
             {
                 Title = infoDto.Title,

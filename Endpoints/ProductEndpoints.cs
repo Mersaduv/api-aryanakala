@@ -42,7 +42,7 @@ namespace ApiAryanakala.Endpoints
             .AddEndpointFilter<ValidationFilter<ProductCreateDTO>>()
             .ProducesValidationProblem()
             .WithName("CreateProduct")
-            .Accepts<ProductCreateDTO>("application/json");
+            .Accepts<ProductCreateDTO>("multipart/form-data");
 
             app.MapPut("/api/product", UpdateProduct)
             .RequireAuthorization()
@@ -62,7 +62,7 @@ namespace ApiAryanakala.Endpoints
 
         //Write
         private async static Task<IResult> CreateProduct(IProductRepository _productRepo,
-                      [FromBody] ProductCreateDTO product_C_DTO, IUnitOfWork unitOfWork, ILogger<Program> _logger, HttpContext context)
+                      ProductCreateDTO product_C_DTO, IUnitOfWork unitOfWork, ILogger<Program> _logger, HttpContext context)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
             _logger.Log(LogLevel.Information, "Create Product");

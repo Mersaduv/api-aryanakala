@@ -15,7 +15,6 @@ public static class CreateProductMapper
             Category = product_C_DTO.Category,
             Description = product_C_DTO.Description,
             Discount = product_C_DTO.Discount,
-            Images = product_C_DTO.Images,
             Info = product_C_DTO.Info.Select(info => new Info
             {
                 Title = info.Title,
@@ -40,7 +39,6 @@ public static class CreateProductMapper
             Category = product.Category,
             Description = product.Description,
             Discount = product.Discount,
-            Images = product.Images,
             Info = product.Info.Select(infoDto => new InfoDto
             {
                 Title = infoDto.Title,
