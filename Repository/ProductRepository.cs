@@ -23,22 +23,22 @@ public class ProductRepository : IProductRepository
 
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        var productWithInfo = db.Products.Include(x => x.Info)
+        var productAll = db.Products.Include(x => x.Info).Include(x => x.Images)
         .AsNoTracking()
         .ToListAsync();
 
-        return await productWithInfo;
+        return await productAll;
     }
 
 
-    public async Task<Product> GetAsync(Guid id)
+    public async Task<Product> GetAsyncBy(Guid id)
     {
-        return await db.Products.Include(x => x.Info).FirstOrDefaultAsync(u => u.Id == id);
+        return await db.Products.Include(x => x.Info).Include(x => x.Images).FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<Product> GetAsync(string productName)
+    public async Task<Product> GetAsyncBy(string productName)
     {
-        return await db.Products.FirstOrDefaultAsync(u => u.Title.ToLower() == productName.ToLower());
+        return await db.Products.Include(x => x.Info).Include(x => x.Images).FirstOrDefaultAsync(u => u.Title.ToLower() == productName.ToLower());
     }
 
     public async Task RemoveAsync(Product product)

@@ -1,16 +1,18 @@
 using ApiAryanakala.Entities;
 using ApiAryanakala.Models.DTO.ProductDtos;
+using ApiAryanakala.Utility;
 
 namespace ApiAryanakala.Mapper.Write;
 
 public static class CreateProductMapper
 {
-    public static Product ToProducts(this ProductCreateDTO product_C_DTO)
+    public static Product ToProducts(this ProductCreateDTO product_C_DTO, ByteFileUtility byteFileUtility)
     {
         return new Product
         {
             Id = Guid.NewGuid(),
             Title = product_C_DTO.Title,
+            Images = byteFileUtility.SaveFileInFolder(product_C_DTO.Thumbnail, nameof(Product), false),//!Boolean true is encrypted and Boolean false is not encrypted
             Code = product_C_DTO.Code,
             Category = product_C_DTO.Category,
             Description = product_C_DTO.Description,
@@ -20,6 +22,7 @@ public static class CreateProductMapper
                 Title = info.Title,
                 Value = info.Value,
             }).ToList(),
+            Colors = product_C_DTO.Colors,
             InStock = product_C_DTO.InStock,
             Price = product_C_DTO.Price,
             Rating = product_C_DTO.Rating,
@@ -44,6 +47,7 @@ public static class CreateProductMapper
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
+            Colors = product.Colors,
             InStock = product.InStock,
             Price = product.Price,
             Rating = product.Rating,

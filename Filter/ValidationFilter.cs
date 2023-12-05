@@ -2,34 +2,41 @@ using FluentValidation;
 
 namespace ApiAryanakala.Filter;
 
-public class ValidationFilter<T> : IEndpointFilter
+public class GuidValidationFilter : IEndpointFilter
 {
-    private readonly IValidator<T> validator;
 
-    public ValidationFilter(IValidator<T> validator)
-    {
-        this.validator = validator;
-    }
-
-    public async ValueTask<object> InvokeAsync(
-        EndpointFilterInvocationContext context,
+    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context,
         EndpointFilterDelegate next)
     {
-        var x = context.Arguments.FirstOrDefault();
-        var y = x.GetType();
-
-        if (context.Arguments.FirstOrDefault(x => x?.GetType() == typeof(T)) is not T argument)
+        foreach (var keyValuePair in context.HttpContext.Request.RouteValues)
         {
-            return Results.BadRequest("Unable to find parameters or body for validation");
-        }
-
-        var validationResult = await this.validator.ValidateAsync(argument!);
-
-        if (!validationResult.IsValid)
-        {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            if (keyValuePair.Key.EndsWith("Id") || keyValuePair.Key == "id")
+            {
+                var isValid = IsValidGuid(keyValuePair.Value.ToString());
+                if (!isValid)
+                {
+                    var errorResponse = GenerateErrorResponse();
+                    errorResponse.Errors.Add("Identifier not in correct GUID format");
+                    return Results.Json(errorResponse, statusCode: errorResponse.StatusCode);
+                }
+            }
         }
 
         return await next(context);
+    }
+
+    private bool IsValidGuid(string id)
+    {
+        return Guid.TryParse(id, out var value);
+    }
+
+    protected ErrorResponse GenerateErrorResponse()
+    {
+        var apiError = new ErrorResponse();
+        apiError.StatusCode = 400;
+        apiError.StatusPhrase = "Bad request";
+        apiError.Timestamp = DateTime.Now;
+
+        return apiError;
     }
 }

@@ -1,7 +1,9 @@
 using ApiAryanakala;
 using ApiAryanakala.Data;
 using ApiAryanakala.Endpoints;
+using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
+using ApiAryanakala.Services.Product;
 using ApiAryanakala.Utility;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -28,8 +30,9 @@ builder.Services.Configure<Configs>(builder.Configuration.GetSection("Configs"))
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWork();
 builder.Services.AddInfraUtility();
+builder.Services.AddScoped<IProductServices, ProductServices>();
 
-builder.Services.AddServices();
+builder.Services.AddApplicationServices();
 // builder.Services.AddStackExchangeRedisCache(options =>
 //    {
 //        options.Configuration = configuration["RedisCache:Url"];
@@ -48,11 +51,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
 });
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.AddJWT();
 builder.Services.AddSwagger();
 builder.Services.AddCors();
-builder.Services.AddApplicationServices();
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
@@ -62,19 +64,17 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api Aryanakala"));
+// }
 // app.UseCors(b => b.AllowAnyOrigin());
-
-app.UseCors();
+// app.UseCors();
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod());
 app.UseStaticFiles();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.ConfigureAuthEndpoints();
 app.ConfigureProductEndpoints();

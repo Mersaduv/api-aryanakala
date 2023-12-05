@@ -2,9 +2,11 @@ using System.Text;
 using ApiAryanakala.Framework;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IRepository;
+using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Repository;
 using ApiAryanakala.Services.Auth;
+using ApiAryanakala.Services.Product;
 using ApiAryanakala.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -22,6 +24,7 @@ namespace ApiAryanakala
         public static void AddApplicationServices(this IServiceCollection services)
         {
             services.AddScoped<IPermissionService, PermissionService>();
+            services.AddScoped<IAuthServices, AuthService>();
         }
 
         public static void AddUnitOfWork(this IServiceCollection services)
@@ -32,11 +35,6 @@ namespace ApiAryanakala
         public static void AddInfraUtility(this IServiceCollection services)
         {
             services.AddSingleton<EncryptionUtility>();
-        }
-
-        public static void AddServices(this IServiceCollection services)
-        {
-            services.AddSingleton<AuthService>();
         }
 
         public static IServiceCollection AddJWT(this IServiceCollection services)
@@ -70,6 +68,7 @@ namespace ApiAryanakala
 
         public static IServiceCollection AddSwagger(this IServiceCollection services)
         {
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo

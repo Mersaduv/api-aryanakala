@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Security.Cryptography;
+using ApiAryanakala.Entities;
 
 namespace ApiAryanakala.Utility;
 
@@ -25,25 +27,35 @@ public class ByteFileUtility
     }
 
 
-    public string SaveFileInFolder(IFormFile file, string entityName, bool isEncrypt = false)
+    public List<ProductImage> SaveFileInFolder(List<IFormFile> files, string entityName, bool isEncrypt = false)
     {
+        List<ProductImage> newFileNames = new List<ProductImage>();
         var appRootPath = enviroment.WebRootPath;
         var mediaRootPath = configuration.GetValue<string>("MediaPath");
 
         CheckAndCreatePathDirectory(appRootPath, mediaRootPath, entityName);
-
-        var newFileName = $"{DateTime.Now.Ticks.ToString()}{GetFileExtension(file.FileName)}";
-
-        var newFilePath = Path.Combine(appRootPath, mediaRootPath, entityName, newFileName);
-
-        var byteArray = ConvertToByteArray(file);
-        if (isEncrypt)
+        foreach (var file in files)
         {
-            byteArray = EncryptFile(byteArray);
+            var newFileName = $"{DateTime.Now.Ticks.ToString()}{GetFileExtension(file.FileName)}";
+
+            var newFilePath = Path.Combine(appRootPath, mediaRootPath, entityName, newFileName);
+
+            var byteArray = ConvertToByteArray(file);
+            if (isEncrypt)
+            {
+                byteArray = EncryptFile(byteArray);
+            }
+            using var writer = new BinaryWriter(System.IO.File.OpenWrite(newFilePath));
+            writer.Write(byteArray);
+            var productImage = new ProductImage
+            {
+                ThumbnailFileName = newFileName,
+            };
+            newFileNames.Add(productImage);
         }
-        using var writer = new BinaryWriter(System.IO.File.OpenWrite(newFilePath));
-        writer.Write(byteArray);
-        return newFileName;
+        return newFileNames;
+
+
     }
 
     private string GetEntityFolderUrl(string host, string entityName, bool isHttps)
@@ -68,12 +80,18 @@ public class ByteFileUtility
         }
     }
 
-    public string GetEncryptedFileActionUrl(string thumbnailFileName, string entityName)
+    public List<string> GetEncryptedFileActionUrl(List<ProductImage> thumbnailFiles, string entityName)
     {
+        List<string> imagesSrc = new List<string>();
         var hostUrl = httpContextAccessor.HttpContext.Request.Host.Value;
         var isHttps = httpContextAccessor.HttpContext.Request.IsHttps;
         var httpMode = isHttps ? "https" : "http";
-        return $"{httpMode}://{hostUrl}/api/Media/{entityName}/{thumbnailFileName}";
+        foreach (var thumbnailFile in thumbnailFiles)
+        {
+            var src = $"{httpMode}://{hostUrl}/api/base/images/{entityName}/{thumbnailFile.ThumbnailFileName}";
+            imagesSrc.Add(src);
+        }
+        return imagesSrc;
     }
 
     public byte[] ConvertToByteArray(IFormFile file)
