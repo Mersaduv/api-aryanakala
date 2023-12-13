@@ -78,6 +78,8 @@ app.UseAuthorization();
 
 app.ConfigureAuthEndpoints();
 app.ConfigureProductEndpoints();
+app.ConfigureCategoryEndpoints();
+app.ConfigureBrandEndpoints();
 app.UseHttpsRedirection();
 
 app.Run();

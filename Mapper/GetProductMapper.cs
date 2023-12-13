@@ -2,7 +2,7 @@ using ApiAryanakala.Entities;
 using ApiAryanakala.Models.DTO.ProductDtos;
 using ApiAryanakala.Utility;
 
-namespace ApiAryanakala.Mapper.Query;
+namespace ApiAryanakala.Mapper;
 
 public static class GetProductMapper
 {
@@ -20,14 +20,15 @@ public static class GetProductMapper
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
-            Category = product.Category,
+            CategoryId = product.CategoryId,
+            // Category = product.Category,
             Description = product.Description,
             Discount = product.Discount,
             InStock = product.InStock,
             Price = product.Price,
             Rating = product.Rating,
             Size = product.Size,
-            Colors = product.Colors,
+            // Colors = product.Colors,
             Slug = product.Slug,
             Sold = product.Sold,
             Created = product.Created,
@@ -49,14 +50,15 @@ public static class GetProductMapper
                     Title = infoDto.Title,
                     Value = infoDto.Value,
                 }).ToList(),
-                Category = prod.Category,
+                // Category = prod.Category,
+                CategoryId = prod.CategoryId,
                 Description = prod.Description,
                 Discount = prod.Discount,
                 InStock = prod.InStock,
                 Price = prod.Price,
                 Rating = prod.Rating,
                 Size = prod.Size,
-                Colors = prod.Colors,
+                // Colors = prod.Colors,
                 Slug = prod.Slug,
                 Sold = prod.Sold,
                 Created = prod.Created,

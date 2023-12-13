@@ -12,8 +12,9 @@ public class ProductDTO
     public string Description { get; set; }
     public double? Discount { get; set; }
     public List<string> Category { get; set; }
+    public int CategoryId { get; set; }
     public List<string> Size { get; set; }
-    public List<string> Colors { get; set; }
+    // public List<string> Colors { get; set; }
     public List<InfoDto> Info { get; set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }

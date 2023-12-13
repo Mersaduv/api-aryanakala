@@ -1,10 +1,11 @@
 using System.Transactions;
+using ApiAryanakala.Entities;
 using ApiAryanakala.Entities.Exceptions;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
-using ApiAryanakala.Mapper.Query;
-using ApiAryanakala.Mapper.Write;
+using ApiAryanakala.Mapper;
+using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO.ProductDtos;
 using ApiAryanakala.Utility;
 namespace ApiAryanakala.Services.Product;
@@ -98,11 +99,33 @@ public class ProductServices : IProductServices
         return result;
     }
 
+    public async Task<GetAllResponse> GetProductsBy(string categoryUrl)
+    {
+        var response = await productRepository.GetProductsAsyncBy(categoryUrl);
+        var result = response.ToProductsResponse(byteFileUtility);
+        return result;
+    }
+
     public async Task<ProductDTO> GetSingleProductBy(Guid id)
     {
         var product = await productRepository.GetAsyncBy(id);
         var result = product.ToProductResponse(byteFileUtility);
         return result;
+    }
+
+    public async Task<ProductSearchResult> SearchProducts(RequestSearchQueryParameters parameters)
+    {
+        var response = await productRepository.SearchProductsAsync(parameters.SearchText, parameters.Page);
+
+        return response;
+    }
+
+
+    public async Task<List<string>> SearchSuggestions(string searchText)
+    {
+        var response = await productRepository.GetProductSearchSuggestionsAsync(searchText);
+
+        return response;
     }
 
 }

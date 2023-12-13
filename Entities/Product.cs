@@ -12,10 +12,12 @@ public class Product
     public double Price { get; set; }
     public string Description { get; set; }
     public double? Discount { get; set; }
-    public List<string> Category { get; set; }
+    public int CategoryId { get; set; }
+    public virtual Category Category { get; set; }
+    public int BrandId { get; set; }
+    public virtual Brand Brand { get; set; }
     public List<string> Size { get; set; }
     public List<Info> Info { get; set; }
-    public long InfoId { get; internal set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }
     public double Rating { get; set; }

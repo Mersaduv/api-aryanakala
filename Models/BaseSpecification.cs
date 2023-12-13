@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ApiAryanakala.Entities;
+namespace ApiAryanakala.Models;
 
 public class BaseSpecification<T> : ISpecification<T>
 {

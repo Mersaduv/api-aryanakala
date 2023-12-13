@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ApiAryanakala.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApiAryanakala.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231209175513_SeedMoreProduct")]
+    partial class SeedMoreProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,23 +25,6 @@ namespace ApiAryanakala.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("ApiAryanakala.Entities.Brand", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Brand");
-                });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Category", b =>
                 {
@@ -91,9 +77,6 @@ namespace ApiAryanakala.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("BrandId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
@@ -113,6 +96,9 @@ namespace ApiAryanakala.Migrations
 
                     b.Property<int>("InStock")
                         .HasColumnType("integer");
+
+                    b.Property<long>("InfoId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
@@ -140,8 +126,6 @@ namespace ApiAryanakala.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
 
                     b.HasIndex("CategoryId");
 
@@ -329,19 +313,11 @@ namespace ApiAryanakala.Migrations
 
             modelBuilder.Entity("ApiAryanakala.Entities.Product", b =>
                 {
-                    b.HasOne("ApiAryanakala.Entities.Brand", "Brand")
-                        .WithMany("Products")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ApiAryanakala.Entities.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Brand");
 
                     b.Navigation("Category");
                 });
@@ -404,11 +380,6 @@ namespace ApiAryanakala.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ApiAryanakala.Entities.Brand", b =>
-                {
-                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Category", b =>

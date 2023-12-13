@@ -1,24 +1,22 @@
 using ApiAryanakala.Entities;
+using ApiAryanakala.Entities.Exceptions;
 using ApiAryanakala.Enums;
 using ApiAryanakala.Extensions;
+using ApiAryanakala.Models;
 using System.Linq.Expressions;
 using static System.Linq.Expressions.Expression;
 namespace ApiAryanakala.Utility;
 
 public static class QueryHelpers
 {
-    public static IQueryable<T> BuildQuery<T>(IQueryable<T> query, RequestQueryParameters parameters)
+    public static IQueryable<T> BuildQuery<T>(IQueryable<T> query, RequestQueryParameters parameters) where T : Product
     {
-        var filterParameters = FilterParameters.Create(parameters);
-
-        if (filterParameters.FilterBy.IsNullEmpty().Not() && filterParameters.FilterValue.IsNullEmpty().Not() && filterParameters.FilterOperator.IsNullEmpty().Not())
-        {
-            query = BuildFilter(query, filterParameters.FilterBy!, filterParameters.FilterValue!, filterParameters.FilterOperator!);
-        }
         if (parameters.Sort.IsNullEmpty().Not() && parameters.SortBy.IsNullEmpty().Not())
         {
             query = BuildOrder(query, parameters.Sort!, parameters.SortBy!);
         }
+        query = ApplyPriceRange(query, parameters.MinPrice, parameters.MaxPrice);
+
         return query;
     }
 
@@ -41,56 +39,55 @@ public static class QueryHelpers
     }
     private static IQueryable<T> BuildOrder<T>(IQueryable<T> query, string sort, string sortBy)
     {
-        var objectType = typeof(T);
-        var property = objectType.GetProperty(sort); //.GetProperties().FirstOrDefault(e => e.Name == sort);
-
-        if (property == null)
-            return query;
-
-        var parameter = Parameter(objectType);
-        var accessor = PropertyOrField(parameter, property.Name);
-
-        var expr = Lambda<Func<T, object>>(accessor, parameter);
-
-        if (sortBy == nameof(OrderTypes.asc))
-            return query.OrderBy(expr);
-
-        return query.OrderByDescending(expr);
-    }
-
-    private static IQueryable<T> BuildFilter<T>(IQueryable<T> query, string filterBy, string filterValue, string op = "eq")
-    {
-        var objectType = typeof(T);
-        var property = objectType.GetProperty(filterBy); //.FirstOrDefault(e => e.Name == filterBy);
-
-        if (property == null) return query;
-
-        var propertyType = property.PropertyType;
-        ParameterExpression prm = Parameter(objectType);
-
-        var queryOp = op switch
+        if (!string.IsNullOrEmpty(sortBy) && !string.IsNullOrEmpty(sort))
         {
-            "eq" => "Equals",
-            "cont" => "Contains",
-            _ => "Equals"
-        };
+            var entityType = typeof(T);
+            var propertyName = sortBy;
 
-        var prop = Property(prm, property);
-        var method = propertyType.GetMethod(queryOp, new[] { propertyType })!;
+            // Get the property based on the provided sortBy
+            var property = entityType.GetProperty(propertyName);
 
-        Expression body = Call(
-            prop,
-            method,
-            Constant(filterValue)
-        );
+            if (property != null)
+            {
+                var parameter = Expression.Parameter(entityType, "x");
 
-        if (op == "ne") body = Not(body);
+                var propertyAccess = Expression.Property(parameter, property);
 
-        Expression<Func<T, bool>> expr = Lambda<Func<T, bool>>(body, prm);
+                var orderByExpression = Expression.Lambda(propertyAccess, parameter);
 
-        if (expr != null)
-            query = query.Where(expr);
+                var methodName = sort.ToLower() == OrderTypes.desc.ToString() ? "OrderByDescending" : "OrderBy";
+
+                // Create an expression representing the OrderBy or OrderByDescending method call
+                var orderByMethod = typeof(Queryable).GetMethods()
+                    .Single(method => method.Name == methodName && method.IsGenericMethodDefinition && method.GetParameters().Length == 2)
+                    .MakeGenericMethod(entityType, property.PropertyType);
+
+                // Call OrderBy or OrderByDescending on the query
+                query = (IQueryable<T>)orderByMethod.Invoke(null, new object[] { query, orderByExpression });
+            }
+            else
+            {
+                throw new CoreException($"Property '{sortBy}' not found in entity type '{entityType.Name}'.");
+            }
+        }
 
         return query;
     }
+
+    private static IQueryable<T> ApplyPriceRange<T>(IQueryable<T> query, double? minPrice, double? maxPrice) where T : Product
+    {
+        if (minPrice.HasValue)
+        {
+            query = query.Where(item => item.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(item => item.Price <= maxPrice.Value);
+        }
+        return query;
+    }
+
+
+
 }

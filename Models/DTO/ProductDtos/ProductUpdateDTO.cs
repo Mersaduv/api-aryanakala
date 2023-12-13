@@ -13,9 +13,10 @@ public class ProductUpdateDTO
     public string Description { get; set; }
     public double? Discount { get; set; }
     public List<IFormFile> Images { get; set; }
-    public List<string> Category { get; set; }
+    // public List<string> Category { get; set; }
+    public int CategoryId { get; set; }
     public List<string> Size { get; set; }
-    public List<string> Colors { get; set; }
+    // public List<string> Colors { get; set; }
     public List<InfoDto> Info { get; set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }
@@ -35,7 +36,8 @@ public class ProductUpdateDTO
         var discount = string.IsNullOrEmpty(form["Discount"]) ? null : (double?)double.Parse(form["Discount"]);
         var categories = form["Category"].ToList();
         var sizes = form["Size"].ToList();
-        var colors = form["Colors"].ToList();
+        var categoryId = int.Parse(form["CategoryId"]);
+        // var colors = form["Colors"].ToList();
         var infoData = form["Info"];
         var infoList = ParseInfoData(infoData);
         var inStock = int.Parse(form["InStock"]);
@@ -52,9 +54,9 @@ public class ProductUpdateDTO
             Price = price,
             Description = description,
             Discount = discount,
-            Category = categories,
+            CategoryId = categoryId,
             Size = sizes,
-            Colors = colors,
+            // Colors = colors,
             Info = infoList,
             InStock = inStock,
             Sold = sold,

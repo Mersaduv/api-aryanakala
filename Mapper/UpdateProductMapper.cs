@@ -2,7 +2,7 @@ using ApiAryanakala.Entities;
 using ApiAryanakala.Models.DTO.ProductDtos;
 using ApiAryanakala.Utility;
 
-namespace ApiAryanakala.Mapper.Write;
+namespace ApiAryanakala.Mapper;
 
 public static class UpdateProductMapper
 {
@@ -14,7 +14,7 @@ public static class UpdateProductMapper
             Title = product_U_DTO.Title,
             Images = byteFileUtility.SaveFileInFolder(product_U_DTO.Images, nameof(Product), false),//!Boolean true is encrypted and Boolean false is not encrypted
             Code = product_U_DTO.Code,
-            Category = product_U_DTO.Category,
+            CategoryId = product_U_DTO.CategoryId,
             Description = product_U_DTO.Description,
             Discount = product_U_DTO.Discount,
             Info = product_U_DTO.Info.Select(info => new Info
@@ -22,7 +22,7 @@ public static class UpdateProductMapper
                 Title = info.Title,
                 Value = info.Value,
             }).ToList(),
-            Colors = product_U_DTO.Colors,
+            // Colors = product_U_DTO.Colors,
             InStock = product_U_DTO.InStock,
             Price = product_U_DTO.Price,
             Rating = product_U_DTO.Rating,
@@ -40,7 +40,7 @@ public static class UpdateProductMapper
             Id = product.Id,
             Title = product.Title,
             Code = product.Code,
-            Category = product.Category,
+            CategoryId = product.CategoryId,
             Description = product.Description,
             Discount = product.Discount,
             Info = product.Info.Select(infoDto => new InfoDto
@@ -48,7 +48,7 @@ public static class UpdateProductMapper
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
-            Colors = product.Colors,
+            // Colors = product.Colors,
             InStock = product.InStock,
             Price = product.Price,
             Rating = product.Rating,
