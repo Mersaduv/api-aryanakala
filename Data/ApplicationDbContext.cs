@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
 
     }
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<Info> Info => Set<Info>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();

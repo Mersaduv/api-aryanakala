@@ -1,12 +1,14 @@
 using ApiAryanakala.Entities;
+using ApiAryanakala.Models;
 
 namespace ApiAryanakala.Interfaces.IRepository;
 
-public interface IGenericRepository<T> where T : BaseClass
+public interface IGenericRepository<T> where T : BaseClass<int>
 {
     Task<T> GetByIdAsync(int id);
     Task<IReadOnlyList<T>> GetAllAsync();
-    Task<T> GetByIdWithSpec(ISpecification<T> spec);
-    Task<IReadOnlyList<T>> GetAllWithSpec(ISpecification<T> spec);
-    Task<int> CountASync(ISpecification<T> spec);
+    Task<int> Add(T entity);
+    Task<int> Update(T entity);
+    Task<int> Delete(int id);
+
 }

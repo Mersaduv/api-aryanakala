@@ -24,6 +24,14 @@ public class ProductEntityConfiguration : IEntityTypeConfiguration<Product>
               .WithOne(x => x.Products)
               .HasForeignKey(x => x.ProductId);
 
+              builder.HasOne(x => x.Category)
+                  .WithMany(x => x.Products)
+                 .HasForeignKey(x => x.CategoryId);
+
+              builder.HasOne(x => x.Brand)
+                  .WithMany(x => x.Products)
+                 .HasForeignKey(x => x.BrandId);
+
               builder.ToTable("Products");
        }
 }

@@ -25,6 +25,8 @@ namespace ApiAryanakala
         {
             services.AddScoped<IPermissionService, PermissionService>();
             services.AddScoped<IAuthServices, AuthService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         }
 
         public static void AddUnitOfWork(this IServiceCollection services)
