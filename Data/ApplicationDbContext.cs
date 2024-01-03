@@ -2,9 +2,6 @@ using System.Reflection;
 using ApiAryanakala.Configurations;
 using ApiAryanakala.Entities;
 using ApiAryanakala.Entities.Security;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Query.Internal;
@@ -14,15 +11,23 @@ namespace ApiAryanakala.Data;
 
 public class ApplicationDbContext : DbContext
 {
+    protected ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) { }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-    {
+#if DEBUG
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.LogTo(Console.WriteLine);
+#endif
 
-    }
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<Category> Categories => Set<Category>();
-    public DbSet<Info> Info => Set<Info>();
+    public DbSet<Brand> Brand => Set<Brand>();
+    public DbSet<ProductAttribute> ProductAttribute => Set<ProductAttribute>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<Role> Roles => Set<Role>();
@@ -52,7 +57,29 @@ public class ApplicationDbContext : DbContext
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Category>()
+        .HasMany(p => p.Products)
+        .WithOne(p => p.Category)
+        .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Category>(category =>
+        {
+            category.HasKey(c => c.Id);
+            category.HasIndex(c => c.ParentCategoryId);
+
+            category.HasOne(c => c.ParentCategory)
+            .WithMany(c => c.ChildCategories)
+            .HasForeignKey(c => c.ParentCategoryId);
+        });
+        modelBuilder.Entity<CartItem>()
+       .HasKey(ci => new { ci.UserId, ci.ProductId, ci.CategoryId });
+
+        modelBuilder.Entity<OrderItem>()
+       .HasKey(oi => new { oi.OrderId, oi.ProductId, oi.CategoryId });
+
         modelBuilder.ApplyConfiguration(new ProductEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductAttributeConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductBrandConfiguration());
         modelBuilder.ApplyConfiguration(new UserEntityConfiguration());
         modelBuilder.ApplyConfiguration(new UserRefreshTokenEntityConfiguration());
     }

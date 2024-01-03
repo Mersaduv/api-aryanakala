@@ -1,4 +1,5 @@
 using ApiAryanakala;
+using ApiAryanakala.Const;
 using ApiAryanakala.Data;
 using ApiAryanakala.Endpoints;
 using ApiAryanakala.Interfaces.IServices;
@@ -17,28 +18,30 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     WebRootPath = Path.GetFullPath(Directory.GetCurrentDirectory()),
     Args = args
 });
-ConfigurationManager configuration = builder.Configuration;
+var config = builder.Configuration;
+var appSettings = config.Get<AppSettings>() ?? new AppSettings();
 
+var services = builder.Services;
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+services.AddEndpointsApiExplorer();
+services.AddSwaggerGen();
 //fill configs from appsetting.json
-builder.Services.AddOptions();
-builder.Services.Configure<Configs>(builder.Configuration.GetSection("Configs"));
+services.AddOptions();
+services.Configure<Configs>(builder.Configuration.GetSection("Configs"));
 
-builder.Services.AddRepositories();
-builder.Services.AddUnitOfWork();
-builder.Services.AddInfraUtility();
-builder.Services.AddScoped<IProductServices, ProductServices>();
+services.AddRepositories();
+services.AddUnitOfWork();
+services.AddInfraUtility();
+services.AddScoped<IProductServices, ProductServices>();
 
-builder.Services.AddApplicationServices();
-// builder.Services.AddStackExchangeRedisCache(options =>
+services.AddApplicationServices();
+// services.AddStackExchangeRedisCache(options =>
 //    {
 //        options.Configuration = configuration["RedisCache:Url"];
 //        options.InstanceName = configuration["RedisCache:Prefix"];
 //    });
-builder.Services.AddStackExchangeRedisCache(options =>
+services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = "localhost:6379,password=redis";
     options.InstanceName = "aryanaKala";
@@ -47,19 +50,42 @@ builder.Services.AddStackExchangeRedisCache(options =>
 string connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 
 //register DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
 });
-builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-builder.Services.AddJWT();
-builder.Services.AddSwagger();
-builder.Services.AddCors();
+_ = appSettings.DbProvider switch
+{
+    null => throw new Exception("No provider found"),
 
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
-builder.Services.AddSingleton<ByteFileUtility>();
-builder.Services.AddHttpContextAccessor();
+    DbProvider.Sqlite => services.AddDbContext<ApplicationDbContext, SqliteDatabaseContext>(options =>
+        options.UseSqlite(config.GetConnectionString(nameof(DbProvider.Sqlite)) ?? string.Empty)),
+
+    DbProvider.SqlServer => services.AddDbContext<ApplicationDbContext, SqlServerDatabaseContext>(options =>
+        options.UseSqlServer(config.GetConnectionString(nameof(DbProvider.SqlServer)) ?? string.Empty)),
+
+    DbProvider.PostgreSql => services.AddDbContext<ApplicationDbContext, PostgreSqlDatabaseContext>(options =>
+        options.UseNpgsql(config.GetConnectionString(nameof(DbProvider.PostgreSql)) ?? string.Empty)),
+
+    DbProvider.InMemory => services.AddDbContext<ApplicationDbContext, InMemoryDatabaseContext>(options =>
+        options.UseInMemoryDatabase(nameof(InMemoryDatabaseContext))),
+
+    DbProvider.AzureCosmos => services.AddDbContext<ApplicationDbContext, AzureCosmosDatabaseContext>(options =>
+        options.UseCosmos(config.GetConnectionString(nameof(DbProvider.AzureCosmos)) ?? string.Empty,
+            databaseName: nameof(DbProvider.AzureCosmos))),
+
+    _ => throw new Exception($"Unsupported provider: {appSettings.DbProvider}")
+};
+
+services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+services.AddJWT();
+services.AddSwagger();
+services.AddCors();
+
+services.AddAuthentication();
+services.AddAuthorization();
+services.AddSingleton<ByteFileUtility>();
+services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -76,10 +102,18 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.ConfigureAuthEndpoints();
-app.ConfigureProductEndpoints();
-app.ConfigureCategoryEndpoints();
-app.ConfigureBrandEndpoints();
+var apiGroup = app.MapGroup(Constants.Api);
+apiGroup
+    .MapAuthApi()
+    .MapProductApi()
+    .MapAddressApi()
+    .MapBrandApi()
+    .MapCartApi()
+    .MapCategoryApi()
+    .MapOrderApi()
+    .MapPaymentApi()
+    .MapRatingApi();
+
 app.UseHttpsRedirection();
 
 app.Run();

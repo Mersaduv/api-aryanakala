@@ -15,20 +15,19 @@ public static class GetProductMapper
             Code = product.Code,
             ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl(product.Images, nameof(Product)),
 
-            Info = product.Info.Select(infoDto => new InfoDto
+            ProductAttribute = product.ProductAttribute.Select(infoDto => new ProductAttributeDto
             {
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
             CategoryId = product.CategoryId,
-            // Category = product.Category,
+            BrandId = product.BrandId,
             Description = product.Description,
             Discount = product.Discount,
             InStock = product.InStock,
             Price = product.Price,
-            Rating = product.Rating,
             Size = product.Size,
-            // Colors = product.Colors,
+            Colors = product.Colors,
             Slug = product.Slug,
             Sold = product.Sold,
             Created = product.Created,
@@ -45,20 +44,19 @@ public static class GetProductMapper
                 Title = prod.Title,
                 ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl(prod.Images, nameof(Product)),
                 Code = prod.Code,
-                Info = prod.Info.Select(infoDto => new InfoDto
+                ProductAttribute = prod.ProductAttribute.Select(infoDto => new ProductAttributeDto
                 {
                     Title = infoDto.Title,
                     Value = infoDto.Value,
                 }).ToList(),
-                // Category = prod.Category,
                 CategoryId = prod.CategoryId,
+                BrandId = prod.BrandId,
                 Description = prod.Description,
                 Discount = prod.Discount,
                 InStock = prod.InStock,
                 Price = prod.Price,
-                Rating = prod.Rating,
                 Size = prod.Size,
-                // Colors = prod.Colors,
+                Colors = prod.Colors,
                 Slug = prod.Slug,
                 Sold = prod.Sold,
                 Created = prod.Created,

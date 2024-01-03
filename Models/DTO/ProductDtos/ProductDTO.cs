@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ApiAryanakala.Entities;
 namespace ApiAryanakala.Models.DTO.ProductDtos;
 
 public class ProductDTO
@@ -13,9 +14,10 @@ public class ProductDTO
     public double? Discount { get; set; }
     public List<string> Category { get; set; }
     public int CategoryId { get; set; }
+    public int BrandId { get; set; }
     public List<string> Size { get; set; }
-    // public List<string> Colors { get; set; }
-    public List<InfoDto> Info { get; set; }
+    public List<ProductColor> Colors { get; set; }
+    public List<ProductAttributeDto> ProductAttribute { get; set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }
     public double Rating { get; set; }

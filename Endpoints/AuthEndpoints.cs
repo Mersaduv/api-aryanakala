@@ -1,64 +1,45 @@
-using System.Net;
-using ApiAryanakala.Data;
-using ApiAryanakala.Interfaces;
+using ApiAryanakala.Const;
+using ApiAryanakala.Entities;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO;
-using ApiAryanakala.Utility;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ApiAryanakala.Endpoints;
 
 public static class AuthEndpoints
 {
-    public static void ConfigureAuthEndpoints(this WebApplication app)
+    public static IEndpointRouteBuilder MapAuthApi(this IEndpointRouteBuilder apiGroup)
     {
-        app.MapPost("/api/login", Login).WithName("Login").Accepts<LoginRequestDTO>("application/json")
-            .Produces<APIResponse>(200).Produces(400);
-        app.MapPost("/api/register", Register).WithName("Register").Accepts<RegisterationRequestDTO>("application/json")
-            .Produces<APIResponse>(200).Produces(400);
-        app.MapPost("/api/generateToken", GenerateNewToken).WithName("GenerateNewToken").Accepts<GenerateNewTokenDTO>("application/json").Produces<APIResponse>(200).Produces(400); ;
+        var authGroup = apiGroup.MapGroup(Constants.Auth);
+
+        authGroup.MapPost(Constants.Register, RegisterUser);
+        authGroup.MapPost(Constants.Login, LogInUser);
+        // authGroup.MapPost(Constants.ChangePassword, ChangePasswordAsync);
+        authGroup.MapPost(Constants.GenerateRefreshToken, GenerateNewToken);
+
+        return apiGroup;
     }
 
-    private async static Task<IResult> GenerateNewToken(ApplicationDbContext applicationDbContext, GenerateNewTokenDTO model,
-     EncryptionUtility encryptionUtility,
-     IUnitOfWork unitOfWork, IOptions<Configs> options, IAuthServices authService)
+    private static async Task<Results<Ok<ServiceResponse<GenerateNewTokenDTO>>, BadRequest<ServiceResponse<GenerateNewTokenDTO>>>> GenerateNewToken(
+    IAuthServices authService, GenerateNewTokenDTO request)
     {
-        APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-        var result = await authService.GenerateNewToken(model);
-
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.OK;
-        response.Result = result;
-        return Results.Ok(response);
+        var response = await authService.GenerateNewToken(request);
+        return !response.Success ? TypedResults.BadRequest(response) : TypedResults.Ok(response);
     }
 
-
-    private async static Task<IResult> Register(IUnitOfWork unitOfWork, LoginRequestDTO model, EncryptionUtility encryptionUtility, ApplicationDbContext applicationDbContext,
-    IAuthServices authServices)
+    private static async Task<Results<Ok<ServiceResponse<Guid>>, BadRequest<ServiceResponse<Guid>>>> RegisterUser(
+        IAuthServices authService, UserRegister request)
     {
-        APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-        await authServices.Register(model);
-
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.OK;
-        return Results.Ok(response);
+        var response = await authService.RegisterAsync(new User { Email = request.Email, UserName = request.UserName }, request.Password);
+        return !response.Success ? TypedResults.BadRequest(response) : TypedResults.Ok(response);
     }
 
-
-    private async static Task<IResult> Login(IUnitOfWork unitOfWork, ApplicationDbContext applicationDbContext,
-        [FromBody] LoginRequestDTO model, EncryptionUtility encryptionUtility, IOptions<Configs> options, IAuthServices authService)
+    private static async Task<Results<Ok<ServiceResponse<LoginResponse>>, BadRequest<ServiceResponse<LoginResponse>>>> LogInUser(
+        IAuthServices authService, UserLogin request)
     {
-        APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-        var result = await authService.Login(model);
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.OK;
-        response.Result = result;
-        return Results.Ok(response);
+        var response = await authService.LogInAsync(request.Email, request.Password);
+        return !response.Success ? TypedResults.BadRequest(response) : TypedResults.Ok(response);
     }
-
-
 }
 

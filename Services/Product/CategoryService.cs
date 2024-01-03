@@ -1,8 +1,13 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ApiAryanakala.Data;
 using ApiAryanakala.Entities;
 using ApiAryanakala.Entities.Exceptions;
 using ApiAryanakala.Interfaces.IServices;
+using ApiAryanakala.Models;
+using ApiAryanakala.Models.DTO.ProductDtos.Category;
 using Microsoft.EntityFrameworkCore;
+using X.PagedList;
 
 namespace ApiAryanakala.Services.Product;
 
@@ -15,43 +20,136 @@ public class CategoryService : ICategoryService
         _context = context;
     }
 
-    public async Task<Category> Add(Category category)
+    public async Task<ServiceResponse<CategoryDTO>> Add(Category category)
     {
+        if ((GetBy(category.Id).GetAwaiter().GetResult()).Data != null)
+        {
+            return new ServiceResponse<CategoryDTO>
+            {
+                Data = new CategoryDTO(),
+                Success = false,
+                Message = "Category Name/Id already Exists"
+            };
+        }
+
         await _context.Categories.AddAsync(category);
         await _context.SaveChangesAsync();
-        return category;
+
+        // Project the added category to a DTO before returning
+        var categoryDTO = new CategoryDTO
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Url = category.Url,
+            ParentCategoryId = category.ParentCategoryId,
+            // Omit ChildCategories here to avoid circular reference
+        };
+
+        return new ServiceResponse<CategoryDTO>
+        {
+            Data = categoryDTO
+        };
     }
 
-    public async Task<bool> Delete(int id)
+    public async Task<ServiceResponse<bool>> Delete(int id)
     {
         var success = false;
-        Category category = await GetBy(id);
-        if (category == null)
+        Category category = await _context.Categories
+            .Include(c => c.ChildCategories)
+            .FirstOrDefaultAsync(c => c.Id == id);
+        if (category != null)
         {
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             success = true;
         }
-        return success;
+        return new ServiceResponse<bool>
+        {
+            Data = success
+        };
     }
 
-    public async Task<Category> GetBy(int id)
+    public async Task<ServiceResponse<List<CategoryDTO>>> GetAll()
     {
-        return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+        var categories = await _context.Categories
+            .Include(c => c.ChildCategories)
+            .ToListAsync();
+
+        // Project entities to DTOs
+        var categoryDTOs = categories.Select(c => new CategoryDTO
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Url = c.Url,
+            ParentCategoryId = c.ParentCategoryId,
+            ChildCategories = c.ChildCategories?.Select(cc => new CategoryDTO
+            {
+                Id = cc.Id,
+                Name = cc.Name,
+                Url = cc.Url,
+                ParentCategoryId = cc.ParentCategoryId,
+                // Omit ChildCategories here to avoid circular reference
+            }).ToList()
+        }).ToList();
+
+        return new ServiceResponse<List<CategoryDTO>>
+        {
+            Data = categoryDTOs
+        };
     }
 
-    public async Task<List<Category>> GetAll()
+
+    public async Task<ServiceResponse<CategoryDTO?>> GetBy(int id)
     {
-        var categories = await _context.Categories.ToListAsync();
-        return categories;
+        var category = await _context.Categories
+            .Include(c => c.ChildCategories)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (category != null)
+        {
+            var categoryDTO = new CategoryDTO
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Url = category.Url,
+                ParentCategoryId = category.ParentCategoryId,
+                ChildCategories = category.ChildCategories?.Select(cc => new CategoryDTO
+                {
+                    Id = cc.Id,
+                    Name = cc.Name,
+                    Url = cc.Url,
+                    ParentCategoryId = cc.ParentCategoryId,
+                    // Omit ChildCategories here to avoid circular reference
+                }).ToList()
+            };
+
+            return new ServiceResponse<CategoryDTO?>
+            {
+                Data = categoryDTO
+            };
+        }
+        else
+        {
+            return new ServiceResponse<CategoryDTO?>
+            {
+                Data = null,
+                Success = false,
+                Message = "Category not found."
+            };
+        }
     }
 
-    public async Task<Category> Update(Category category)
+    public async Task<ServiceResponse<CategoryDTO>> Update(Category category)
     {
-        var dbCategory = await GetBy(category.Id);
+        var dbCategory = (await GetBy(category.Id)).Data;
         if (dbCategory == null)
         {
-            throw new CoreException("Category not found.");
+            return new ServiceResponse<CategoryDTO>
+            {
+                Data = null,
+                Success = false,
+                Message = "Category not found."
+            };
         }
 
         dbCategory.Name = category.Name;
@@ -59,8 +157,71 @@ public class CategoryService : ICategoryService
 
         await _context.SaveChangesAsync();
 
-        return dbCategory;
+        // Project the updated category to a DTO before returning
+        var updatedCategoryDTO = new CategoryDTO
+        {
+            Id = dbCategory.Id,
+            Name = dbCategory.Name,
+            Url = dbCategory.Url,
+            ParentCategoryId = dbCategory.ParentCategoryId,
+            // Omit ChildCategories here to avoid circular reference
+        };
 
+        return new ServiceResponse<CategoryDTO>
+        {
+            Data = updatedCategoryDTO
+        };
+    }
+
+
+    public async Task<ServiceResponse<IPagedList<CategoryDTO>>> GetAllCategories(int? page, int pageSize)
+    {
+        var categories = await _context.Categories.Include(c => c.ParentCategory)
+            .ToPagedListAsync<Category>(page ?? 1, pageSize);
+
+        var categoryDTOs = categories.Select(c => new CategoryDTO
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Url = c.Url,
+            ParentCategoryId = c.ParentCategoryId,
+            ChildCategories = c.ChildCategories?.Select(cc => new CategoryDTO
+            {
+                Id = cc.Id,
+                Name = cc.Name,
+                Url = cc.Url,
+                ParentCategoryId = cc.ParentCategoryId,
+                // Omit ChildCategories here to avoid circular reference
+            }).ToList(),
+        });
+
+        return new ServiceResponse<IPagedList<CategoryDTO>>
+        {
+            Data = new StaticPagedList<CategoryDTO>(categoryDTOs, categories.GetMetaData())
+        };
+    }
+
+
+    public IEnumerable<int> GetAllChildCategories(int parentCategoryId) =>
+        GetAllChildCategoriesHelper(parentCategoryId, null, null);
+
+    public IEnumerable<int> GetAllChildCategoriesHelper(int parentCategoryId, List<Category> allCategories, List<Category> allChildCategories)
+    {
+        if (allCategories == null)
+        {
+            allCategories = _context.Categories.ToList();
+            allChildCategories = new List<Category>();
+        }
+
+        var childCategories = allCategories.Where(c => c.ParentCategoryId == parentCategoryId);
+
+        if (childCategories.Count() > 0)
+        {
+            allChildCategories.AddRange(childCategories.ToList());
+            foreach (var childCategory in childCategories)
+                GetAllChildCategoriesHelper(childCategory.Id, allCategories, allChildCategories);
+        }
+        return allChildCategories.Select(c => c.Id);
     }
 
 }

@@ -18,7 +18,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseClass<in
         return await _context.Set<T>().ToListAsync();
     }
 
-    public async Task<T> GetByIdAsync(int id)
+    public async Task<T> GetAsyncBy(int id)
     {
         return await _context.Set<T>().FindAsync(id);
     }
@@ -38,7 +38,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseClass<in
 
     public async Task<int> Delete(int id)
     {
-        var entity = await GetByIdAsync(id);
+        var entity = await GetAsyncBy(id);
         if (entity == null)
         {
             return 0; // Entity not found
@@ -47,4 +47,10 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseClass<in
         _context.Set<T>().Remove(entity);
         return await _context.SaveChangesAsync();
     }
+
+    public async Task<int> GetTotalCountAsync()
+    {
+        return await _context.Set<T>().CountAsync();
+    }
+
 }

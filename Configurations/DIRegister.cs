@@ -5,6 +5,7 @@ using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Repository;
+using ApiAryanakala.Services;
 using ApiAryanakala.Services.Auth;
 using ApiAryanakala.Services.Product;
 using ApiAryanakala.Utility;
@@ -27,6 +28,11 @@ namespace ApiAryanakala
             services.AddScoped<IAuthServices, AuthService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IRatingServices, RatingServices>();
+            services.AddScoped<IAddressService, AddressService>();
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IOrderServices, OrderService>();
+            services.AddScoped<IPaymentService, PaymentService>();
         }
 
         public static void AddUnitOfWork(this IServiceCollection services)

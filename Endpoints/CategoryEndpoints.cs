@@ -1,126 +1,88 @@
 using System.Net;
+using ApiAryanakala.Const;
 using ApiAryanakala.Entities;
 using ApiAryanakala.Filter;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
+using ApiAryanakala.Models.DTO.ProductDtos.Category;
+using Microsoft.AspNetCore.Http.HttpResults;
+using X.PagedList;
 
 namespace ApiAryanakala.Endpoints;
 
 public static class CategoryEndpoints
 {
-    public static void ConfigureCategoryEndpoints(this WebApplication app)
+    public static IEndpointRouteBuilder MapCategoryApi(this IEndpointRouteBuilder apiGroup)
     {
-        app.MapPost("/api/category", CreateCategory)
-        .Produces(401)
-        .Produces<APIResponse>(201)
-        .Produces(400)
-        // .AddEndpointFilter<ModelValidationFilter<Category>>()
-        .ProducesValidationProblem()
-        .WithName("CreateCategory")
-        .Accepts<Category>("application/json");
+        var categoryGroup = apiGroup.MapGroup(Constants.Category);
 
+        apiGroup.MapGet(Constants.Categories, GetAllCategory);
 
-        app.MapPut("/api/category", UpdateCategory)
-        .WithName("UpdateCategory")
-        .AddEndpointFilter<GuidValidationFilter>()
-        .AddEndpointFilter<ModelValidationFilter<Category>>()
-        .ProducesValidationProblem()
-        .Produces<APIResponse>(200)
-        .Produces(400)
-        .Accepts<Category>("application/json");
+        categoryGroup.MapPost(string.Empty, CreateCategory);
 
-        app.MapGet("/api/category/{id:int}", GetCategory)
-        .WithName("GetCategory").AddEndpointFilter<GuidValidationFilter>()
-        .Produces<APIResponse>(200);
+        categoryGroup.MapPut(string.Empty, UpdateCategory);
 
-        app.MapGet("/api/categories", GetAllCategory)
-        .WithName("GetCategories").Produces<APIResponse>(200);
+        categoryGroup.MapGet("{id:int}", GetCategory);
 
-        app.MapDelete("/api/category/{id:int}", DeleteCategory)
-        // .RequireAuthorization()
-        .AddEndpointFilter<GuidValidationFilter>()
-        .ProducesValidationProblem()
-        .Produces(204).Produces(400);
+        categoryGroup.MapDelete("{id:int}", DeleteCategory);
+
+        return apiGroup;
     }
 
-    private static async Task<IResult> CreateCategory(ICategoryService categoryServices,
+    private static async Task<Ok<ServiceResponse<CategoryDTO>>> CreateCategory(ICategoryService categoryServices,
                Category category, ILogger<Program> _logger, HttpContext context)
     {
-        APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
         _logger.Log(LogLevel.Information, "Create Category");
-
-
-        if (categoryServices.GetBy(category.Id).GetAwaiter().GetResult() != null)
-        {
-            response.ErrorMessages.Add("Category Name/Id already Exists");
-            return Results.BadRequest(response);
-        }
 
         var result = await categoryServices.Add(category);
 
-        response.Result = result;
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.Created;
-        return Results.Ok(response);
+        return TypedResults.Ok(result);
     }
 
-    private async static Task<IResult> UpdateCategory(ICategoryService categoryServices,
+    private async static Task<Ok<ServiceResponse<CategoryDTO>>> UpdateCategory(ICategoryService categoryServices,
                Category category, ILogger<Program> _logger)
     {
-        APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
         _logger.Log(LogLevel.Information, "Update Category");
 
+        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
 
         var result = await categoryServices.Update(category);
-        response.Result = result;
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.OK;
-        return Results.Ok(response);
+
+        return TypedResults.Ok(result);
     }
 
-    private async static Task<IResult> GetCategory(ICategoryService categoryServices,
+    private async static Task<Ok<ServiceResponse<CategoryDTO>>> GetCategory(ICategoryService categoryServices,
      ILogger<Program> _logger, int id)
     {
-        APIResponse response = new();
         _logger.Log(LogLevel.Information, "Get Category");
 
+        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
+
         var result = await categoryServices.GetBy(id);
-        response.Result = result;
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.OK;
-        return Results.Ok(response);
+
+        return TypedResults.Ok(result);
     }
 
-    private async static Task<IResult> GetAllCategory(ICategoryService categoryServices, ILogger<Program> _logger)
+    private async static Task<Ok<ServiceResponse<IPagedList<CategoryDTO>>>> GetAllCategory(ICategoryService categoryServices, ILogger<Program> _logger)
     {
-        APIResponse response = new();
         _logger.Log(LogLevel.Information, "Getting all Categories");
 
+        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
 
-        var result = await categoryServices.GetAll();
-        response.Result = result;
-        response.IsSuccess = true;
-        response.StatusCode = HttpStatusCode.OK;
-        return Results.Ok(response);
+        var result = await categoryServices.GetAllCategories(null, 10);
+
+        return TypedResults.Ok(result);
     }
 
-    private async static Task<IResult> DeleteCategory(ICategoryService categoryServices, int id, ILogger<Program> _logger, HttpContext context)
+    private async static Task<Ok<ServiceResponse<bool>>> DeleteCategory(ICategoryService categoryServices, int id, ILogger<Program> _logger, HttpContext context)
     {
-        APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
         _logger.Log(LogLevel.Information, "Delete Category");
 
+        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
+
         var result = await categoryServices.Delete(id);
-        if (result)
-        {
-            response.IsSuccess = true;
-            response.StatusCode = HttpStatusCode.NoContent;
-            return Results.Ok(response);
-        }
-        else
-        {
-            response.ErrorMessages.Add("Invalid Id");
-            return Results.BadRequest(response);
-        }
+
+        return TypedResults.Ok(result);
     }
 
 }

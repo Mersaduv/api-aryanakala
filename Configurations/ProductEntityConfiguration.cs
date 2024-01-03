@@ -20,17 +20,21 @@ public class ProductEntityConfiguration : IEntityTypeConfiguration<Product>
               builder.Property(p => p.Discount)
                 .IsRequired(false);
 
-              builder.HasMany(x => x.Info)
+              builder.HasMany(x => x.ProductAttribute)
               .WithOne(x => x.Products)
               .HasForeignKey(x => x.ProductId);
 
-              builder.HasOne(x => x.Category)
-                  .WithMany(x => x.Products)
-                 .HasForeignKey(x => x.CategoryId);
+              builder.HasOne(p => p.Category)
+                  .WithMany(c => c.Products)
+                  .HasForeignKey(p => p.CategoryId)
+                  .OnDelete(DeleteBehavior.Restrict);
 
               builder.HasOne(x => x.Brand)
                   .WithMany(x => x.Products)
                  .HasForeignKey(x => x.BrandId);
+
+              builder.Navigation(p => p.Category)
+              .UsePropertyAccessMode(PropertyAccessMode.Property);
 
               builder.ToTable("Products");
        }

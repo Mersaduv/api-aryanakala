@@ -30,19 +30,23 @@ namespace ApiAryanakala.Services.Auth
 
 
         private readonly EncryptionUtility encryptionUtility;
+        private readonly IHttpContextAccessor httpContextAccessor;
+
 
         public AuthService(IDistributedCache cache, IOptions<Configs> options, ApplicationDbContext applicationDbContext,
-        IUnitOfWork unitOfWork, EncryptionUtility encryptionUtility)
+        IUnitOfWork unitOfWork, EncryptionUtility encryptionUtility, IHttpContextAccessor httpContextAccessor)
         {
             _cache = cache;
             configs = options.Value;
             this.applicationDbContext = applicationDbContext;
             this.unitOfWork = unitOfWork;
             this.encryptionUtility = encryptionUtility;
+            this.httpContextAccessor = httpContextAccessor;
+
         }
 
 
-        public async Task<GenerateNewTokenDTO> GenerateNewToken(GenerateNewTokenDTO command)
+        public async Task<ServiceResponse<GenerateNewTokenDTO>> GenerateNewToken(GenerateNewTokenDTO command)
         {
             var userRefreshToken = await applicationDbContext.UserRefreshTokens
             .SingleOrDefaultAsync(q => q.RefreshToken == command.RefreshToken);
@@ -50,10 +54,26 @@ namespace ApiAryanakala.Services.Auth
             var userId = await ValidateRefreshToken(command.RefreshToken);
             var user = await applicationDbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
 
-            if (user is null) throw new CoreException("User not found");
-            if (userRefreshToken is null) throw new CoreException("RefreshToken not found");
+            if (user is null)
+            {
+                return new ServiceResponse<GenerateNewTokenDTO>()
+                {
+                    Data = null,
+                    Success = false,
+                    Message = "User not found"
+                };
+            }
+            if (userRefreshToken is null)
+            {
+                return new ServiceResponse<GenerateNewTokenDTO>()
+                {
+                    Data = null,
+                    Success = false,
+                    Message = "RefreshToken not found"
+                };
+            }
 
-            var token = GetNewToken(userRefreshToken.UserId);
+            var token = CreateToken(user);
             var refreshToken = await GenerateRefreshToken(userRefreshToken.UserId);
 
             // Insert or update refresh token in db
@@ -92,40 +112,50 @@ namespace ApiAryanakala.Services.Auth
                 RefreshToken = refreshToken
             };
 
-            return result;
+            return new ServiceResponse<GenerateNewTokenDTO>
+            {
+                Data = result
+            };
         }
 
-        public async Task Register(LoginRequestDTO command)
+        public async Task<ServiceResponse<Guid>> RegisterAsync(User user, string password)
         {
-            var salt = encryptionUtility.GetNewSalt();
-            var hashPassowrd = encryptionUtility.GetSHA256(command.Password, salt);
-
-            var user = new User
+            // var salt = encryptionUtility.GetNewSalt();
+            // var hashPassowrd = encryptionUtility.GetSHA256(command.Password, salt);
+            if (await UserExistsAsync(user.UserName))
             {
-                Id = Guid.NewGuid(),
-                Password = hashPassowrd,
-                PasswordSalt = salt,
-                RegisterDate = DateTime.UtcNow,
-                UserName = command.UserName
-            };
+                return new ServiceResponse<Guid> { Success = false, Message = "User already exists." };
+            }
+
+            CreatePasswordHash(password, out var passwordHash, out var passwordSalt);
+
+            user.Password = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            user.RegisterDate = DateTime.UtcNow;
+
 
             await applicationDbContext.Users.AddAsync(user);
             await unitOfWork.SaveChangesAsync();
+
+            return new ServiceResponse<Guid> { Data = user.Id };
         }
 
-        public async Task<LoginResponseDTO> Login(LoginRequestDTO command)
+        public async Task<ServiceResponse<LoginResponse>> LogInAsync(string email, string password)
         {
-            var user = await applicationDbContext.Users.AsNoTracking().FirstOrDefaultAsync(q => q.UserName == command.UserName);
+            var user = await applicationDbContext.Users.AsNoTracking().FirstOrDefaultAsync(q => q.Email.ToLower() == email.ToLower());
+            var response = new ServiceResponse<LoginResponse>();
             if (user is null)
             {
-                throw new CoreException("Username is incorrect");
+                response.Success = false;
+                response.Message = "User not found.";
             }
-            var hashPassowrd = encryptionUtility.GetSHA256(command.Password, user.PasswordSalt);
+            else if (!VerifyPasswordHash(password, user.Password, user.PasswordSalt))
+            {
+                response.Success = false;
+                response.Message = "Wrong password.";
+            }
 
-            // Check passWord
-            if (user.Password != hashPassowrd) throw new CoreException("Password is incorrect");
-
-            var token = GetNewToken(user.Id);
+            var token = CreateToken(user);
             var refreshToken = await GenerateRefreshToken(user.Id);
 
             // Insert or update refresh token in db
@@ -158,7 +188,7 @@ namespace ApiAryanakala.Services.Auth
             // Save changes to the database
             await unitOfWork.SaveChangesAsync();
 
-            var result = new LoginResponseDTO
+            var result = new LoginResponse
             {
                 UserName = user.UserName,
                 Token = token,
@@ -166,8 +196,26 @@ namespace ApiAryanakala.Services.Auth
                 RefreshToken = refreshToken,
                 RefreshTokenExpireTime = configs.RefreshTokenTimeout
             };
+            response.Data = result;
 
-            return result;
+            return response;
+        }
+
+        public async Task<ServiceResponse<bool>> ChangePasswordAsync(int userId, string newPassword)
+        {
+            var user = await applicationDbContext.Users.FindAsync(userId);
+            if (user is null)
+            {
+                return new ServiceResponse<bool> { Success = false, Message = "User not found.", Data = false };
+            }
+
+            CreatePasswordHash(newPassword, out var passwordHash, out var passwordSalt);
+
+            user.Password = passwordHash;
+            user.PasswordSalt = passwordSalt;
+            await unitOfWork.SaveChangesAsync();
+
+            return new ServiceResponse<bool> { Success = true, Message = "Password has been changed.", Data = true };
         }
 
 
@@ -223,6 +271,65 @@ namespace ApiAryanakala.Services.Auth
             return userCache.UserId;
         }
 
+        public Task<ServiceResponse<bool>> ChangePassword(Guid userId, string newPassword)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Guid GetUserId() => Guid.Parse(httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        public string GetUserEmail() => httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+
+
+
+        public async Task<bool> UserExists(string email)
+        {
+            if (await applicationDbContext.Users.AnyAsync(user => user.Email.ToLower()
+                 .Equals(email.ToLower())))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<User> GetUserByEmail(string email)
+        {
+            return await applicationDbContext.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+        }
+
+        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        {
+            using var hmac = new HMACSHA512();
+            passwordSalt = hmac.Key;
+            passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+        }
+
+        private async Task<bool> UserExistsAsync(string email) =>
+         await applicationDbContext.Users.AnyAsync(user => user.Email.ToLower() == email.ToLower());
+
+
+        private static bool VerifyPasswordHash(string password, IEnumerable<byte> passwordHash, byte[] passwordSalt)
+        {
+            using var hmac = new HMACSHA512(passwordSalt);
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return computedHash.SequenceEqual(passwordHash);
+        }
+
+        private string CreateToken(User user)
+        {
+            var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Email),
+            new(ClaimTypes.Email, user.Email),
+        };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configs.TokenKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var token = new JwtSecurityToken(claims: claims,
+                expires: DateTime.Now.AddMinutes(configs.TokenTimeout), signingCredentials: creds);
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            return jwt;
+        }
     }
 
 }

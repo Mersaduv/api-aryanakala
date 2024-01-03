@@ -1,6 +1,7 @@
 using ApiAryanakala.Data;
 using ApiAryanakala.Entities;
 using ApiAryanakala.Interfaces.IRepository;
+using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Mapper;
 using ApiAryanakala.Utility;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,14 @@ public class ProductRepository : IProductRepository
 {
     private readonly ApplicationDbContext db;
     private readonly ByteFileUtility byteFileUtility;
+    private readonly ICategoryService categoryService;
 
-    public ProductRepository(ApplicationDbContext db, ByteFileUtility byteFileUtility)
+    public ProductRepository(ApplicationDbContext db, ByteFileUtility byteFileUtility, ICategoryService categoryService,
+    IAuthServices authServices)
     {
         this.db = db;
         this.byteFileUtility = byteFileUtility;
+        this.categoryService = categoryService;
     }
     public async Task CreateAsync(Product product)
     {
@@ -23,31 +27,48 @@ public class ProductRepository : IProductRepository
 
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        var productAll = db.Products.Include(x => x.Info).Include(x => x.Images)
+        var productAll = db.Products.Include(x => x.ProductAttribute).Include(x => x.Images).Include(x => x.Colors)
         .AsNoTracking()
         .ToListAsync();
 
         return await productAll;
     }
 
+    public async Task<int> GetTotalCountAsync()
+    {
+        return await db.Products.CountAsync();
+    }
 
     public async Task<Product> GetAsyncBy(Guid id)
     {
-        return await db.Products.Include(x => x.Info).Include(x => x.Images).FirstOrDefaultAsync(u => u.Id == id);
+        return await db.Products.Include(x => x.ProductAttribute).Include(x => x.Images).Include(x => x.Colors).AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<Product> GetAsyncBy(string productName)
     {
-        return await db.Products.Include(x => x.Info).Include(x => x.Images).FirstOrDefaultAsync(u => u.Title.ToLower() == productName.ToLower());
+        return await db.Products.Include(x => x.ProductAttribute).Include(x => x.Images).Include(x => x.Colors).FirstOrDefaultAsync(u => u.Title.ToLower() == productName.ToLower());
     }
 
     public async Task<IEnumerable<Product>> GetProductsAsyncBy(string categoryUrl)
     {
-        return await db.Products
-                              .Where(p => p.Category.Url.ToLower().Equals(categoryUrl.ToLower()))
-                              .Include(p => p.Info)
-                              .Include(p => p.Images)
-                              .ToListAsync();
+        var category = db.Categories
+                              .Where(p => p.Url.ToLower().Equals(categoryUrl.ToLower()))
+                              .Include(p => p.ChildCategories)
+                              .FirstOrDefault();
+        var productsFromDB = await GetAllAsync();
+
+        if (category != null)
+        {
+            List<int> categoriesToSearchForProducts = new List<int>();
+            categoriesToSearchForProducts.Add(category.Id);
+
+            var childCategories = categoryService.GetAllChildCategories(category.Id);
+            categoriesToSearchForProducts.AddRange(childCategories);
+
+            productsFromDB = productsFromDB.Where(p => categoriesToSearchForProducts.Contains(p.CategoryId));
+        }
+        // return products;
+        return productsFromDB;
     }
 
 
@@ -66,9 +87,9 @@ public class ProductRepository : IProductRepository
         var pageResults = 2f;
         var pageCount = Math.Ceiling((await FindProductsBySearchText(searchText)).Count / pageResults);
         IEnumerable<Product> products = await db.Products
-                            .Where(p => p.Title.ToLower().Contains(searchText.ToLower()) ||
-                                p.Description.ToLower().Contains(searchText.ToLower()))
-                            .Include(x => x.Info).Include(x => x.Images)
+                            .Where(p => p.Title.ToLower().Contains(searchText.ToLower().Trim()) ||
+                                p.Description.ToLower().Contains(searchText.ToLower().Trim()))
+                            .Include(x => x.ProductAttribute).Include(x => x.Images).Include(x => x.Colors)
                             .Skip((page - 1) * (int)pageResults)
                             .Take((int)pageResults)
                             .ToListAsync();
@@ -87,9 +108,9 @@ public class ProductRepository : IProductRepository
     public async Task<List<Product>> FindProductsBySearchText(string searchText)
     {
         return await db.Products
-                            .Where(p => p.Title.ToLower().Contains(searchText.ToLower()) ||
-                                p.Description.ToLower().Contains(searchText.ToLower()))
-                            .Include(x => x.Info).Include(x => x.Images)
+                            .Where(p => p.Title.ToLower().Contains(searchText.ToLower().Trim()) ||
+                                p.Description.ToLower().Contains(searchText.ToLower().Trim()))
+                            .Include(x => x.ProductAttribute).Include(x => x.Images).Include(x => x.Colors)
                             .ToListAsync();
     }
 
@@ -126,4 +147,10 @@ public class ProductRepository : IProductRepository
         return result;
     }
 
+    public async Task<bool> UpsertProductImagesAsync(List<Guid> productIds)
+    {
+        // var userId = authServices.GetUserId();
+
+        return true;
+    }
 }

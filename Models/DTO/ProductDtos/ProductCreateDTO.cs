@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
+using ApiAryanakala.Entities;
+using ApiAryanakala.Utility;
 using Newtonsoft.Json;
 
 namespace ApiAryanakala.Models.DTO.ProductDtos;
@@ -13,14 +15,14 @@ public class ProductCreateDTO
     public string Description { get; set; }
     public double? Discount { get; set; }
     public List<IFormFile> Thumbnail { get; set; }
-    // public List<string> Category { get; set; }
     public int CategoryId { get; set; }
+    public int BrandId { get; set; }
+    public List<ProductColor> Colors { get; set; }
     public List<string> Size { get; set; }
-    // public List<string> Colors { get; set; }
-    public List<InfoDto> Info { get; set; } = [];
+    public List<ProductAttributeDto> ProductAttribute { get; set; } = [];
     public int InStock { get; set; }
     public int? Sold { get; set; }
-    public double Rating { get; set; }
+    public double? Rating { get; set; }
     public DateTime? Created { get; set; }
     public DateTime? LastUpdated { get; set; }
     public static async ValueTask<ProductCreateDTO?> BindAsync(HttpContext context,
@@ -38,11 +40,14 @@ public class ProductCreateDTO
         var discount = string.IsNullOrEmpty(form["Discount"]) ? null : (double?)double.Parse(form["Discount"]);
         // var categories = form["Category"].ToList();
         var categoryId = int.Parse(form["CategoryId"]);
+        var brandId = int.Parse(form["BrandId"]);
 
         var sizes = form["Size"].ToList();
-        // var colors = form["Colors"].ToList();
-        var infoData = form["Info"];
-        var infoList = ParseInfoData(infoData);
+
+        var colors = form["Colors"];
+        var productColors = ParseHelper.ParseData<ProductColor>(colors);
+        var productAttributeDtoData = form["ProductAttribute"];
+        var productAttributeList = ParseHelper.ParseData<ProductAttributeDto>(productAttributeDtoData);
         var inStock = int.Parse(form["InStock"]);
 
         var sold = string.IsNullOrEmpty(form["Sold"]) ? null : (int?)int.Parse(form["Sold"]);
@@ -60,9 +65,10 @@ public class ProductCreateDTO
             Description = description,
             Discount = discount,
             CategoryId = categoryId,
+            BrandId = brandId,
             Size = sizes,
-            // Colors = colors,
-            Info = infoList,
+            Colors = productColors,
+            ProductAttribute = productAttributeList,
             InStock = inStock,
             Sold = sold,
             Rating = rating,
@@ -71,22 +77,6 @@ public class ProductCreateDTO
         };
     }
 
-
-    private static List<InfoDto> ParseInfoData(string infoData)
-    {
-        try
-        {
-            string jsonString = $"[{infoData}]";
-
-            InfoDto[] myObjectsArray = JsonConvert.DeserializeObject<InfoDto[]>(jsonString);
-            List<InfoDto> myObjectsList = new(myObjectsArray);
-            return myObjectsList;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return [];
-        }
-    }
 
 }
 
