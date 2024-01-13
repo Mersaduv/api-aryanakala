@@ -1,4 +1,4 @@
-using ApiAryanakala.Entities;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Models;
 
 namespace ApiAryanakala.Interfaces.IServices;

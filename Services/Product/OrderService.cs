@@ -1,6 +1,5 @@
 using ApiAryanakala.Data;
-using ApiAryanakala.Entities;
-using ApiAryanakala.Entities.Exceptions;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Utility;
@@ -58,7 +57,7 @@ public class OrderService : IOrderServices
         orderDetailsResponse.Products.Add(new OrderDetailsProductResponse
         {
             ProductId = item.ProductId,
-            ImageUrl = byteFileUtility.GetEncryptedFileActionUrl(item.Product.Images, nameof(Product)),
+            ImageUrl = byteFileUtility.GetEncryptedFileActionUrl(item.Product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
             CategoryName = item.Category.Name,
             Quantity = item.Quantity,
             Title = item.Product.Title,
@@ -90,7 +89,7 @@ public class OrderService : IOrderServices
                 $"{o.OrderItems.First().Product.Title} and" +
                 $" {o.OrderItems.Count - 1} more..." :
                 o.OrderItems.First().Product.Title,
-            ProductImageUrl = byteFileUtility.GetEncryptedFileActionUrl(o.OrderItems.First().Product.Images, nameof(Product))
+            ProductImageUrl = byteFileUtility.GetEncryptedFileActionUrl(o.OrderItems.First().Product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product))
         }));
 
         response.Data = orderResponse;

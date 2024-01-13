@@ -10,7 +10,6 @@ using ApiAryanakala.Services.Auth;
 using ApiAryanakala.Services.Product;
 using ApiAryanakala.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -22,34 +21,34 @@ namespace ApiAryanakala
         {
             services.AddScoped<IProductRepository, ProductRepository>();
         }
-        public static void AddApplicationServices(this IServiceCollection services)
+        public static void AddApplicationServices(this IServiceCollection services, AppSettings appSettings)
         {
-            services.AddScoped<IPermissionService, PermissionService>();
-            services.AddScoped<IAuthServices, AuthService>();
-            services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            services.AddScoped<IRatingServices, RatingServices>();
-            services.AddScoped<IAddressService, AddressService>();
-            services.AddScoped<ICartService, CartService>();
-            services.AddScoped<IOrderServices, OrderService>();
-            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped(_ => appSettings)
+        .AddScoped<IProductServices, ProductServices>()
+        .AddScoped<IPermissionService, PermissionService>()
+        .AddScoped<IAuthServices, AuthService>()
+        .AddScoped<ICategoryService, CategoryService>()
+        .AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>))
+        .AddScoped<IRatingServices, RatingServices>()
+        .AddScoped<IAddressService, AddressService>()
+        .AddScoped<ICartService, CartService>()
+        .AddScoped<IOrderServices, OrderService>();
+        // services.AddScoped<IPaymentService, PaymentService>();
         }
 
         public static void AddUnitOfWork(this IServiceCollection services)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
-
         public static void AddInfraUtility(this IServiceCollection services)
         {
-            services.AddSingleton<EncryptionUtility>();
+            services.AddScoped<ByteFileUtility>();
         }
 
-        public static IServiceCollection AddJWT(this IServiceCollection services)
+        public static IServiceCollection AddJWT(this IServiceCollection services, AppSettings appSettings)
         {
             var sp = services.BuildServiceProvider();
-            Configs configs = sp.GetService<IOptions<Configs>>().Value;
-            var key = Encoding.UTF8.GetBytes(configs.TokenKey);
+            var key = Encoding.UTF8.GetBytes(appSettings.AuthSettings.TokenKey);
 
             services.AddAuthentication(x =>
             {
@@ -62,7 +61,7 @@ namespace ApiAryanakala
                 x.SaveToken = true;
                 x.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ClockSkew = TimeSpan.FromMinutes(configs.TokenTimeout),
+                    ClockSkew = TimeSpan.FromMinutes(appSettings.AuthSettings.TokenTimeout),
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),

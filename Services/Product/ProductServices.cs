@@ -1,16 +1,14 @@
-using System;
 using System.Transactions;
 using ApiAryanakala.Data;
-using ApiAryanakala.Entities;
 using ApiAryanakala.Entities.Exceptions;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Mapper;
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDtos;
+using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Utility;
-using Microsoft.EntityFrameworkCore;
 namespace ApiAryanakala.Services.Product;
 
 public class ProductServices : IProductServices
@@ -27,6 +25,7 @@ public class ProductServices : IProductServices
     public ProductServices(IProductRepository productRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor,
     ByteFileUtility byteFileUtility,
     IGenericRepository<Brand> brandRepository,
+    ApplicationDbContext applicationDbContext,
     IAuthServices authServices)
     {
         this.productRepository = productRepository;
@@ -34,6 +33,7 @@ public class ProductServices : IProductServices
         this.httpContextAccessor = httpContextAccessor;
         this.byteFileUtility = byteFileUtility;
         this.brandRepository = brandRepository;
+        this.applicationDbContext = applicationDbContext;
         this.authServices = authServices;
     }
 
@@ -269,8 +269,7 @@ public class ProductServices : IProductServices
         {
             return new ServiceResponse<bool> { Success = false, Message = $"{nameof(Product)} not found." };
         }
-        dbProduct.Images.AddRange(byteFileUtility.SaveFileInFolder(thumbnails.Thumbnail, nameof(Product), false));
-        System.Console.WriteLine(dbProduct);
+        dbProduct.Images.AddRange(byteFileUtility.SaveFileInFolder<ProductImage>(thumbnails.Thumbnail, nameof(Product), false));
         await unitOfWork.SaveChangesAsync();
         return new ServiceResponse<bool>
         {

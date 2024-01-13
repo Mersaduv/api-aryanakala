@@ -1,21 +1,21 @@
-using ApiAryanakala.Entities;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Models;
 using ApiAryanakala.Filter;
 using ApiAryanakala.Data;
 using ApiAryanakala.Utility;
-using ApiAryanakala.Models.DTO.ProductDtos;
+using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Interfaces.IServices;
-using ApiAryanakala.Mapper;
 using ApiAryanakala.Const;
 using Microsoft.AspNetCore.Http.HttpResults;
+using ApiAryanakala.Mapper;
+using ApiAryanakala.Entities.Product;
 
 namespace ApiAryanakala.Endpoints;
 
 public static class ProductEndpoints
 {
-    public static IEndpointRouteBuilder MapProductApi(this IEndpointRouteBuilder apiGroup)
+    public static IEndpointRouteBuilder ConfigureProductEndpoints(this IEndpointRouteBuilder apiGroup)
     {
         var productsGroup = apiGroup.MapGroup(Constants.Products);
         var productGroup = apiGroup.MapGroup(Constants.Product);
@@ -34,7 +34,7 @@ public static class ProductEndpoints
         productsGroup.MapGet($"/{Constants.SearchSuggestions}", GetSearchSuggestions);
 
 
-        var adminProductGroup = productGroup.MapGroup(string.Empty);
+        var adminProductGroup = productGroup.MapGroup(string.Empty).RequireAuthorization();
         adminProductGroup.MapPost(string.Empty, CreateProduct)
         .AddEndpointFilter<ModelValidationFilter<ProductCreateDTO>>()
         .Accepts<ProductCreateDTO>("multipart/form-data")
@@ -48,7 +48,7 @@ public static class ProductEndpoints
         adminProductGroup.MapPost($"/{Constants.ProductImages}/{{id:Guid}}", UpsertProductImages)
         .Accepts<Thumbnails>("multipart/form-data");
 
-        adminProductGroup.MapDelete($"/{Constants.ProductImages}/{{id:Guid}}", DeleteProductImage)
+        adminProductGroup.MapDelete($"/{Constants.ProductImages}/{{fileName}}", DeleteProductImage)
         .AddEndpointFilter<GuidValidationFilter>()
         .ProducesValidationProblem();
 
@@ -187,7 +187,7 @@ public static class ProductEndpoints
 
         // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
 
-        await AccessControl.CheckProductPermissionFlag(context, "product-remove");
+        // await AccessControl.CheckProductPermissionFlag(context, "product-remove");
 
         var result = await productService.Delete(id);
 

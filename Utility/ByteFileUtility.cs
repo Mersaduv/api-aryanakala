@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using ApiAryanakala.Entities;
+using ApiAryanakala.Interfaces;
 
 namespace ApiAryanakala.Utility;
 
@@ -27,9 +28,10 @@ public class ByteFileUtility
     }
 
 
-    public List<ProductImage> SaveFileInFolder(List<IFormFile> files, string entityName, bool isEncrypt = false)
+    public List<TImage> SaveFileInFolder<TImage>(List<IFormFile> files, string entityName, bool isEncrypt = false)
+    where TImage : IThumbnail, new()
     {
-        List<ProductImage> newFileNames = new List<ProductImage>();
+        List<TImage> newFileNames = new List<TImage>();
         var appRootPath = enviroment.WebRootPath;
         var mediaRootPath = configuration.GetValue<string>("MediaPath");
 
@@ -45,18 +47,19 @@ public class ByteFileUtility
             {
                 byteArray = EncryptFile(byteArray);
             }
+
             using var writer = new BinaryWriter(System.IO.File.OpenWrite(newFilePath));
             writer.Write(byteArray);
-            var productImage = new ProductImage
+
+            var image = new TImage
             {
-                ThumbnailFileName = newFileName,
+                ThumbnailFileName = newFileName
             };
-            newFileNames.Add(productImage);
+            newFileNames.Add(image);
         }
         return newFileNames;
-
-
     }
+
 
     private string GetEntityFolderUrl(string host, string entityName, bool isHttps)
     {
@@ -80,7 +83,7 @@ public class ByteFileUtility
         }
     }
 
-    public List<string> GetEncryptedFileActionUrl(List<ProductImage> thumbnailFiles, string entityName)
+    public List<string> GetEncryptedFileActionUrl(List<string> thumbnailFiles, string entityName)
     {
         List<string> imagesSrc = new List<string>();
         var hostUrl = httpContextAccessor.HttpContext.Request.Host.Value;
@@ -88,11 +91,27 @@ public class ByteFileUtility
         var httpMode = isHttps ? "https" : "http";
         foreach (var thumbnailFile in thumbnailFiles)
         {
-            var src = $"{httpMode}://{hostUrl}/api/base/images/{entityName}/{thumbnailFile.ThumbnailFileName}";
+            var src = $"{httpMode}://{hostUrl}/api/base/images/{entityName}/{thumbnailFile}";
             imagesSrc.Add(src);
         }
         return imagesSrc;
     }
+    // public List<string> GetEncryptedFileActionUrl<T>(List<T> files, string entityName, Func<T, string> fileNameSelector)
+    // {
+    //     List<string> fileUrls = new List<string>();
+    //     var hostUrl = httpContextAccessor.HttpContext.Request.Host.Value;
+    //     var isHttps = httpContextAccessor.HttpContext.Request.IsHttps;
+    //     var httpMode = isHttps ? "https" : "http";
+
+    //     foreach (var file in files)
+    //     {
+    //         var src = $"{httpMode}://{hostUrl}/api/base/images/{entityName}/{file.ThumbnailFileName}";
+    //         fileUrls.Add(src);
+    //     }
+
+    //     return fileUrls;
+    // }
+
 
     public byte[] ConvertToByteArray(IFormFile file)
     {

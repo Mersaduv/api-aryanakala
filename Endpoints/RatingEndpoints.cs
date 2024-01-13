@@ -2,7 +2,7 @@ using System.Net;
 using ApiAryanakala.Const;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDtos.Rating;
+using ApiAryanakala.Models.DTO.ProductDto.Rating;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ApiAryanakala.Endpoints;

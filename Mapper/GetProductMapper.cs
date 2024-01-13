@@ -1,5 +1,5 @@
-using ApiAryanakala.Entities;
-using ApiAryanakala.Models.DTO.ProductDtos;
+using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Utility;
 
 namespace ApiAryanakala.Mapper;
@@ -13,7 +13,7 @@ public static class GetProductMapper
             Id = product.Id,
             Title = product.Title,
             Code = product.Code,
-            ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl(product.Images, nameof(Product)),
+            ImagesSrc =byteFileUtility.GetEncryptedFileActionUrl(product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
 
             ProductAttribute = product.ProductAttribute.Select(infoDto => new ProductAttributeDto
             {
@@ -42,7 +42,7 @@ public static class GetProductMapper
             {
                 Id = prod.Id,
                 Title = prod.Title,
-                ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl(prod.Images, nameof(Product)),
+                ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl(prod.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
                 Code = prod.Code,
                 ProductAttribute = prod.ProductAttribute.Select(infoDto => new ProductAttributeDto
                 {

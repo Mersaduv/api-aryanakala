@@ -4,7 +4,7 @@ namespace ApiAryanakala.Models.DTO
 {
     public class UserRegister
     {
-        public string UserName { get; set; }
+        public string UserName { get; set; } = string.Empty;
         [Required, EmailAddress] public string Email { get; set; } = string.Empty;
 
         [Required, StringLength(100, MinimumLength = 6)]

@@ -6,53 +6,47 @@ using ApiAryanakala.Entities.Exceptions;
 using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using ApiAryanakala.Entities.Exceptions;
 using ApiAryanakala.Data;
 using ApiAryanakala.Interfaces;
-using ApiAryanakala.Utility;
 using Microsoft.EntityFrameworkCore;
-using ApiAryanakala.Entities;
 using ApiAryanakala.Interfaces.IServices;
+using ApiAryanakala.Entities.User;
 
 namespace ApiAryanakala.Services.Auth
 {
     public class AuthService : IAuthServices
     {
-        private readonly IConfiguration _configuration;
         private readonly IDistributedCache _cache;
+        private readonly AppSettings _appSettings;
 
-        private readonly Configs configs;
-        private readonly ApplicationDbContext applicationDbContext;
-        private readonly IUnitOfWork unitOfWork;
-
-
-        private readonly EncryptionUtility encryptionUtility;
-        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
 
-        public AuthService(IDistributedCache cache, IOptions<Configs> options, ApplicationDbContext applicationDbContext,
-        IUnitOfWork unitOfWork, EncryptionUtility encryptionUtility, IHttpContextAccessor httpContextAccessor)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+
+        public AuthService(IDistributedCache cache, AppSettings appSettings, ApplicationDbContext applicationDbContext,
+        IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor)
         {
             _cache = cache;
-            configs = options.Value;
-            this.applicationDbContext = applicationDbContext;
-            this.unitOfWork = unitOfWork;
-            this.encryptionUtility = encryptionUtility;
-            this.httpContextAccessor = httpContextAccessor;
+            _appSettings = appSettings;
+            _context = applicationDbContext;
+            _unitOfWork = unitOfWork;
+            _httpContextAccessor = httpContextAccessor;
 
         }
 
 
         public async Task<ServiceResponse<GenerateNewTokenDTO>> GenerateNewToken(GenerateNewTokenDTO command)
         {
-            var userRefreshToken = await applicationDbContext.UserRefreshTokens
+            var userRefreshToken = await _context.UserRefreshTokens
             .SingleOrDefaultAsync(q => q.RefreshToken == command.RefreshToken);
 
             var userId = await ValidateRefreshToken(command.RefreshToken);
-            var user = await applicationDbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
 
             if (user is null)
             {
@@ -77,7 +71,7 @@ namespace ApiAryanakala.Services.Auth
             var refreshToken = await GenerateRefreshToken(userRefreshToken.UserId);
 
             // Insert or update refresh token in db
-            var currentRefreshToken = await applicationDbContext.UserRefreshTokens
+            var currentRefreshToken = await _context.UserRefreshTokens
                 .SingleOrDefaultAsync(q => q.UserId == userRefreshToken.UserId);
 
             if (currentRefreshToken is null)
@@ -87,24 +81,24 @@ namespace ApiAryanakala.Services.Auth
                 {
                     UserId = userRefreshToken.UserId,
                     RefreshToken = refreshToken,
-                    RefreshTokenTimeout = configs.RefreshTokenTimeout,
+                    RefreshTokenTimeout = _appSettings.AuthSettings.RefreshTokenTimeout,
                     CreateDate = DateTime.UtcNow,
                     IsValid = true
                 };
 
-                await applicationDbContext.UserRefreshTokens.AddAsync(userRefreshToken);
+                await _context.UserRefreshTokens.AddAsync(userRefreshToken);
             }
             else
             {
                 // If there is an existing refresh token, update its values
                 currentRefreshToken.RefreshToken = refreshToken;
-                currentRefreshToken.RefreshTokenTimeout = configs.RefreshTokenTimeout;
+                currentRefreshToken.RefreshTokenTimeout = _appSettings.AuthSettings.RefreshTokenTimeout;
                 currentRefreshToken.CreateDate = DateTime.UtcNow;
                 currentRefreshToken.IsValid = true;
             }
 
             // Save changes to the database
-            await unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             var result = new GenerateNewTokenDTO
             {
@@ -134,15 +128,15 @@ namespace ApiAryanakala.Services.Auth
             user.RegisterDate = DateTime.UtcNow;
 
 
-            await applicationDbContext.Users.AddAsync(user);
-            await unitOfWork.SaveChangesAsync();
+            await _context.Users.AddAsync(user);
+            await _unitOfWork.SaveChangesAsync();
 
             return new ServiceResponse<Guid> { Data = user.Id };
         }
 
         public async Task<ServiceResponse<LoginResponse>> LogInAsync(string email, string password)
         {
-            var user = await applicationDbContext.Users.AsNoTracking().FirstOrDefaultAsync(q => q.Email.ToLower() == email.ToLower());
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(q => q.Email.ToLower() == email.ToLower());
             var response = new ServiceResponse<LoginResponse>();
             if (user is null)
             {
@@ -159,7 +153,7 @@ namespace ApiAryanakala.Services.Auth
             var refreshToken = await GenerateRefreshToken(user.Id);
 
             // Insert or update refresh token in db
-            var userRefreshToken = await applicationDbContext.UserRefreshTokens
+            var userRefreshToken = await _context.UserRefreshTokens
                 .SingleOrDefaultAsync(q => q.UserId == user.Id);
 
             if (userRefreshToken == null)
@@ -169,41 +163,41 @@ namespace ApiAryanakala.Services.Auth
                 {
                     UserId = user.Id,
                     RefreshToken = refreshToken,
-                    RefreshTokenTimeout = configs.RefreshTokenTimeout,
+                    RefreshTokenTimeout = _appSettings.AuthSettings.RefreshTokenTimeout,
                     CreateDate = DateTime.UtcNow,
                     IsValid = true
                 };
 
-                await applicationDbContext.UserRefreshTokens.AddAsync(userRefreshToken);
+                await _context.UserRefreshTokens.AddAsync(userRefreshToken);
             }
             else
             {
                 // If there is an existing refresh token, update its values
                 userRefreshToken.RefreshToken = refreshToken;
-                userRefreshToken.RefreshTokenTimeout = configs.RefreshTokenTimeout;
+                userRefreshToken.RefreshTokenTimeout = _appSettings.AuthSettings.RefreshTokenTimeout;
                 userRefreshToken.CreateDate = DateTime.UtcNow;
                 userRefreshToken.IsValid = true;
             }
 
             // Save changes to the database
-            await unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             var result = new LoginResponse
             {
                 UserName = user.UserName,
                 Token = token,
-                ExpireTime = configs.TokenTimeout,
+                ExpireTime = _appSettings.AuthSettings.TokenTimeout,
                 RefreshToken = refreshToken,
-                RefreshTokenExpireTime = configs.RefreshTokenTimeout
+                RefreshTokenExpireTime = _appSettings.AuthSettings.RefreshTokenTimeout
             };
             response.Data = result;
 
             return response;
         }
 
-        public async Task<ServiceResponse<bool>> ChangePasswordAsync(int userId, string newPassword)
+        public async Task<ServiceResponse<bool>> ChangePasswordAsync(Guid userId, string newPassword)
         {
-            var user = await applicationDbContext.Users.FindAsync(userId);
+            var user = await _context.Users.FindAsync(userId);
             if (user is null)
             {
                 return new ServiceResponse<bool> { Success = false, Message = "User not found.", Data = false };
@@ -213,7 +207,7 @@ namespace ApiAryanakala.Services.Auth
 
             user.Password = passwordHash;
             user.PasswordSalt = passwordSalt;
-            await unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new ServiceResponse<bool> { Success = true, Message = "Password has been changed.", Data = true };
         }
@@ -222,7 +216,7 @@ namespace ApiAryanakala.Services.Auth
         private string GetNewToken(Guid userId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(configs.TokenKey);
+            var key = Encoding.UTF8.GetBytes(_appSettings.AuthSettings.TokenKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -231,7 +225,7 @@ namespace ApiAryanakala.Services.Auth
                             new Claim("userId", userId.ToString()),
                 }),
 
-                Expires = DateTime.Now.AddMinutes(configs.TokenTimeout),
+                Expires = DateTime.Now.AddMinutes(_appSettings.AuthSettings.TokenTimeout),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
@@ -253,7 +247,7 @@ namespace ApiAryanakala.Services.Auth
             var cacheData = Encoding.UTF8.GetBytes(serializedUser);
             var cacheOptions = new DistributedCacheEntryOptions
             {
-                AbsoluteExpiration = DateTime.Now.AddMinutes(configs.RefreshTokenTimeout)
+                AbsoluteExpiration = DateTime.Now.AddMinutes(_appSettings.AuthSettings.RefreshTokenTimeout)
             };
             await _cache.SetAsync(refreshToken, cacheData, cacheOptions);
             return refreshToken;
@@ -276,15 +270,15 @@ namespace ApiAryanakala.Services.Auth
             throw new NotImplementedException();
         }
 
-        public Guid GetUserId() => Guid.Parse(httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+        public Guid GetUserId() => Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-        public string GetUserEmail() => httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        public string GetUserEmail() => _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
 
 
 
         public async Task<bool> UserExists(string email)
         {
-            if (await applicationDbContext.Users.AnyAsync(user => user.Email.ToLower()
+            if (await _context.Users.AnyAsync(user => user.Email.ToLower()
                  .Equals(email.ToLower())))
             {
                 return true;
@@ -294,7 +288,7 @@ namespace ApiAryanakala.Services.Auth
 
         public async Task<User> GetUserByEmail(string email)
         {
-            return await applicationDbContext.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
         }
 
         private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -305,7 +299,7 @@ namespace ApiAryanakala.Services.Auth
         }
 
         private async Task<bool> UserExistsAsync(string email) =>
-         await applicationDbContext.Users.AnyAsync(user => user.Email.ToLower() == email.ToLower());
+         await _context.Users.AnyAsync(user => user.Email.ToLower() == email.ToLower());
 
 
         private static bool VerifyPasswordHash(string password, IEnumerable<byte> passwordHash, byte[] passwordSalt)
@@ -323,10 +317,10 @@ namespace ApiAryanakala.Services.Auth
             new(ClaimTypes.Name, user.Email),
             new(ClaimTypes.Email, user.Email),
         };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configs.TokenKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_appSettings.AuthSettings.TokenKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
             var token = new JwtSecurityToken(claims: claims,
-                expires: DateTime.Now.AddMinutes(configs.TokenTimeout), signingCredentials: creds);
+                expires: DateTime.Now.AddMinutes(_appSettings.AuthSettings.TokenTimeout), signingCredentials: creds);
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
         }

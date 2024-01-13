@@ -1,5 +1,5 @@
-using ApiAryanakala.Entities;
-using ApiAryanakala.Models.DTO.ProductDtos;
+using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Utility;
 
 namespace ApiAryanakala.Mapper;
@@ -12,7 +12,7 @@ public static class CreateProductMapper
         {
             Id = Guid.NewGuid(),
             Title = product_C_DTO.Title,
-            Images = byteFileUtility.SaveFileInFolder(product_C_DTO.Thumbnail, nameof(Product), false),//!Boolean true is encrypted and Boolean false is not encrypted
+            Images = byteFileUtility.SaveFileInFolder<ProductImage>(product_C_DTO.Thumbnail, nameof(Product), false),//!Boolean true is encrypted and Boolean false is not encrypted
             Code = product_C_DTO.Code,
             CategoryId = product_C_DTO.CategoryId,
             BrandId = product_C_DTO.BrandId,

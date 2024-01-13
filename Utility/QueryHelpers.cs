@@ -1,10 +1,9 @@
-using ApiAryanakala.Entities;
 using ApiAryanakala.Entities.Exceptions;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Enums;
 using ApiAryanakala.Extensions;
 using ApiAryanakala.Models;
 using System.Linq.Expressions;
-using static System.Linq.Expressions.Expression;
 namespace ApiAryanakala.Utility;
 
 public static class QueryHelpers

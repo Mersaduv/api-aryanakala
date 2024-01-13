@@ -1,4 +1,3 @@
-using ApiAryanakala.Entities;
 using ApiAryanakala.Models;
 
 namespace ApiAryanakala.Interfaces.IRepository;

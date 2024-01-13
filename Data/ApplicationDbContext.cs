@@ -1,39 +1,21 @@
 using System.Reflection;
 using ApiAryanakala.Configurations;
-using ApiAryanakala.Entities;
 using ApiAryanakala.Entities.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.EntityFrameworkCore.Query;
+using ApiAryanakala.Entities.User;
+using ApiAryanakala.Entities.Product;
 
 namespace ApiAryanakala.Data;
 
 public class ApplicationDbContext : DbContext
 {
-    protected ApplicationDbContext(DbContextOptions dbContextOptions) : base(dbContextOptions) { }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    {
 
-#if DEBUG
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.LogTo(Console.WriteLine);
-#endif
-
-    public DbSet<Product> Products => Set<Product>();
-    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
-    public DbSet<Rating> Ratings => Set<Rating>();
-    public DbSet<Category> Categories => Set<Category>();
-    public DbSet<Brand> Brand => Set<Brand>();
-    public DbSet<ProductAttribute> ProductAttribute => Set<ProductAttribute>();
-    public DbSet<User> Users => Set<User>();
-    public DbSet<Address> Addresses => Set<Address>();
-    public DbSet<Order> Orders => Set<Order>();
-    public DbSet<CartItem> CartItems => Set<CartItem>();
-    public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();
-    public DbSet<Permission> Permissions => Set<Permission>();
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
-
+    }
     public virtual string GetPrimaryKey(Type entityModelType)
     {
         return this.Model
@@ -57,6 +39,7 @@ public class ApplicationDbContext : DbContext
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<Category>()
         .HasMany(p => p.Products)
         .WithOne(p => p.Category)
@@ -83,5 +66,24 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserEntityConfiguration());
         modelBuilder.ApplyConfiguration(new UserRefreshTokenEntityConfiguration());
     }
+
+    public DbSet<Product> Products { get; set; } = default!;
+    public DbSet<ProductImage> ProductImages { get; set; } = default!;
+    public DbSet<CategoryImage> CategoryImages { get; set; } = default!;
+    public DbSet<Rating> Ratings { get; set; } = default!;
+    public DbSet<Category> Categories { get; set; } = default!;
+    public DbSet<Brand> Brands { get; set; } = default!;
+    public DbSet<ProductAttribute> ProductAttributes { get; set; } = default!;
+    public DbSet<User> Users { get; set; } = default!;
+    public DbSet<Address> Addresses { get; set; } = default!;
+    public DbSet<Order> Orders { get; set; } = default!;
+    public DbSet<CartItem> CartItems { get; set; } = default!;
+    public DbSet<UserRefreshToken> UserRefreshTokens { get; set; } = default!;
+    public DbSet<Permission> Permissions { get; set; } = default!;
+    public DbSet<Role> Roles { get; set; } = default!;
+    public DbSet<RolePermission> RolePermissions { get; set; } = default!;
+    public DbSet<UserRole> UserRoles { get; set; } = default!;
+
+
 
 }

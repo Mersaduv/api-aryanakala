@@ -1,5 +1,4 @@
-using ApiAryanakala.Entities;
-using ApiAryanakala.Mapper;
+using ApiAryanakala.Entities.Product;
 
 namespace ApiAryanakala.Interfaces.IRepository;
 

@@ -1,6 +1,5 @@
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDtos.Rating;
-using static ApiAryanakala.Services.Product.RatingServices;
+using ApiAryanakala.Models.DTO.ProductDto.Rating;
 
 namespace ApiAryanakala.Interfaces.IServices;
 

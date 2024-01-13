@@ -1,10 +1,9 @@
 using ApiAryanakala.Data;
-using ApiAryanakala.Entities;
-using ApiAryanakala.Entities.Exceptions;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.LinQ;
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDtos.Rating;
+using ApiAryanakala.Models.DTO.ProductDto.Rating;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiAryanakala.Services.Product;

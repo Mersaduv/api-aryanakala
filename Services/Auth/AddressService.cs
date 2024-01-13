@@ -1,5 +1,5 @@
 using ApiAryanakala.Data;
-using ApiAryanakala.Entities;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;

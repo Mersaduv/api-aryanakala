@@ -1,12 +1,9 @@
-using System.Net;
 using ApiAryanakala.Const;
-using ApiAryanakala.Entities;
-using ApiAryanakala.Filter;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDtos.Category;
+using ApiAryanakala.Models.DTO.ProductDto;
+using ApiAryanakala.Models.DTO.ProductDto.Category;
 using Microsoft.AspNetCore.Http.HttpResults;
-using X.PagedList;
 
 namespace ApiAryanakala.Endpoints;
 
@@ -18,7 +15,8 @@ public static class CategoryEndpoints
 
         apiGroup.MapGet(Constants.Categories, GetAllCategory);
 
-        categoryGroup.MapPost(string.Empty, CreateCategory);
+        categoryGroup.MapPost(string.Empty, CreateCategory)
+        .Accepts<CategoryCreateDTO>("multipart/form-data");
 
         categoryGroup.MapPut(string.Empty, UpdateCategory);
 
@@ -26,11 +24,16 @@ public static class CategoryEndpoints
 
         categoryGroup.MapDelete("{id:int}", DeleteCategory);
 
+        categoryGroup.MapPost($"/{Constants.CategoryImages}/{{id:int}}", UpsertCategoryImages)
+        .Accepts<Thumbnails>("multipart/form-data");
+
+        categoryGroup.MapDelete($"/{Constants.CategoryImages}/{{fileName}}", DeleteCategoryImage);
+
         return apiGroup;
     }
 
     private static async Task<Ok<ServiceResponse<CategoryDTO>>> CreateCategory(ICategoryService categoryServices,
-               Category category, ILogger<Program> _logger, HttpContext context)
+               CategoryCreateDTO category, ILogger<Program> _logger, HttpContext context)
     {
         _logger.Log(LogLevel.Information, "Create Category");
 
@@ -40,7 +43,7 @@ public static class CategoryEndpoints
     }
 
     private async static Task<Ok<ServiceResponse<CategoryDTO>>> UpdateCategory(ICategoryService categoryServices,
-               Category category, ILogger<Program> _logger)
+               CategoryUpdateDTO category, ILogger<Program> _logger)
     {
         _logger.Log(LogLevel.Information, "Update Category");
 
@@ -63,7 +66,7 @@ public static class CategoryEndpoints
         return TypedResults.Ok(result);
     }
 
-    private async static Task<Ok<ServiceResponse<IPagedList<CategoryDTO>>>> GetAllCategory(ICategoryService categoryServices, ILogger<Program> _logger)
+    private async static Task<Ok<ServiceResponse<IEnumerable<CategoryDTO>>>> GetAllCategory(ICategoryService categoryServices, ILogger<Program> _logger)
     {
         _logger.Log(LogLevel.Information, "Getting all Categories");
 
@@ -84,5 +87,27 @@ public static class CategoryEndpoints
 
         return TypedResults.Ok(result);
     }
+
+    private static async Task<Ok<ServiceResponse<bool>>> DeleteCategoryImage(string fileName, ICategoryService categoryService, ILogger<Program> _logger)
+    {
+        _logger.Log(LogLevel.Information, "Delete Product Images");
+
+        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
+
+        var result = await categoryService.DeleteCategoryImages(fileName);
+        return TypedResults.Ok(result);
+    }
+
+
+    private static async Task<Ok<ServiceResponse<bool>>> UpsertCategoryImages(int id, Thumbnails thumbnails, ICategoryService categoryService, ILogger<Program> _logger)
+    {
+        _logger.Log(LogLevel.Information, "Upsert Product Images");
+
+        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
+
+        var result = await categoryService.UpsertCategoryImages(thumbnails, id);
+        return TypedResults.Ok(result);
+    }
+
 
 }

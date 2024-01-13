@@ -1,6 +1,5 @@
-using ApiAryanakala.Entities;
-using ApiAryanakala.Models.DTO.ProductDtos;
-using ApiAryanakala.Utility;
+using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Models.DTO.ProductDto;
 
 namespace ApiAryanakala.Mapper;
 

@@ -18,7 +18,7 @@ namespace ApiAryanakala.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.13")
+                .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -84,7 +84,7 @@ namespace ApiAryanakala.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Brand");
+                    b.ToTable("Brands");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.CartItem", b =>
@@ -130,6 +130,25 @@ namespace ApiAryanakala.Migrations
                     b.HasIndex("ParentCategoryId");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("ApiAryanakala.Entities.CategoryImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ThumbnailFileName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("CategoryImages");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Order", b =>
@@ -263,7 +282,7 @@ namespace ApiAryanakala.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductAttribute");
+                    b.ToTable("ProductAttributes");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.ProductColor", b =>
@@ -516,6 +535,17 @@ namespace ApiAryanakala.Migrations
                     b.Navigation("ParentCategory");
                 });
 
+            modelBuilder.Entity("ApiAryanakala.Entities.CategoryImage", b =>
+                {
+                    b.HasOne("ApiAryanakala.Entities.Category", "Categories")
+                        .WithMany("Images")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categories");
+                });
+
             modelBuilder.Entity("ApiAryanakala.Entities.OrderItem", b =>
                 {
                     b.HasOne("ApiAryanakala.Entities.Category", "Category")
@@ -659,6 +689,8 @@ namespace ApiAryanakala.Migrations
             modelBuilder.Entity("ApiAryanakala.Entities.Category", b =>
                 {
                     b.Navigation("ChildCategories");
+
+                    b.Navigation("Images");
 
                     b.Navigation("Products");
                 });

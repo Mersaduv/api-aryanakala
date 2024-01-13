@@ -1,6 +1,6 @@
 using ApiAryanakala.Data;
-using ApiAryanakala.Entities;
-using ApiAryanakala.Entities.Exceptions;
+using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Utility;
@@ -13,15 +13,20 @@ public class CartService : ICartService
     private readonly ApplicationDbContext _context;
     private readonly IAuthServices _authService;
     private readonly ByteFileUtility _byteFileUtility;
-
+    private readonly IProductRepository _productRepository;
+    private readonly ICategoryService _categoryService;
 
     public CartService(ApplicationDbContext context,
      IAuthServices authService,
-     ByteFileUtility byteFileUtility)
+     ByteFileUtility byteFileUtility,
+     IProductRepository productRepository,
+     ICategoryService categoryService)
     {
         _context = context;
         _authService = authService;
         _byteFileUtility = byteFileUtility;
+        _productRepository = productRepository;
+        _categoryService = categoryService;
 
     }
 
@@ -34,17 +39,13 @@ public class CartService : ICartService
 
         foreach (var item in cartItems)
         {
-            var product = await _context.Products
-                .Where(p => p.Id == item.ProductId)
-                .FirstOrDefaultAsync();
-
+            var product = await _productRepository.GetAsyncBy(item.ProductId);
             if (product == null)
             {
                 continue;
             }
-            var category = await _context.Categories
-                .Include(c => c.ChildCategories)
-                .FirstOrDefaultAsync(c => c.Id == item.CategoryId);
+
+            var category = await _categoryService.GetCategoryAsyncBy(item.CategoryId);
             if (category == null)
             {
                 continue;
@@ -54,7 +55,7 @@ public class CartService : ICartService
             {
                 ProductId = product.Id,
                 Title = product.Title,
-                ImageUrl = _byteFileUtility.GetEncryptedFileActionUrl(product.Images, nameof(Product)),
+                ImageUrl = _byteFileUtility.GetEncryptedFileActionUrl(product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
                 Price = product.Price,
                 CategoryName = category.Name,
                 CategoryId = category.Id,
@@ -133,11 +134,11 @@ public class CartService : ICartService
         return new ServiceResponse<bool> { Data = true };
     }
 
-    public async Task<ServiceResponse<bool>> RemoveItemFromCart(Guid productId, int categoryId)
+    public async Task<ServiceResponse<bool>> RemoveItemFromCart(Guid productId)
     {
         var dbCartItem = await _context.CartItems
             .FirstOrDefaultAsync(ci => ci.ProductId == productId &&
-            ci.CategoryId == categoryId && ci.UserId == _authService.GetUserId());
+             ci.UserId == _authService.GetUserId());
         if (dbCartItem == null)
         {
             return new ServiceResponse<bool>

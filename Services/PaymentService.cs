@@ -8,7 +8,7 @@ public record PaymentService(
     ICartService CartService,
     IAuthServices AuthService,
     IOrderServices OrderService,
-    IOptions<Configs> Options) : IPaymentService
+    AuthSettings AuthSettings) : IPaymentService
 {
     private const string ClientBaseUrl = @"https://localhost:7177";
 

@@ -1,8 +1,5 @@
-using System.Net;
 using ApiAryanakala.Const;
-using ApiAryanakala.Entities;
-using ApiAryanakala.Filter;
-using ApiAryanakala.Interfaces.IRepository;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -15,13 +12,13 @@ public static class BrandEndpoints
     {
         var brandGroup = apiGroup.MapGroup(Constants.Brand);
 
+        apiGroup.MapGet(Constants.Brands, GetAllBrand);
+
         brandGroup.MapPost(string.Empty, CreateBrand);
 
         brandGroup.MapPut(string.Empty, UpdateBrand);
 
         brandGroup.MapGet("{id:int}", GetBrand);
-
-        brandGroup.MapGet(Constants.Brands, GetAllBrand);
 
         brandGroup.MapDelete("{id:int}", DeleteBrand);
 

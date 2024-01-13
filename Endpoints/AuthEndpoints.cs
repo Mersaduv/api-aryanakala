@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using ApiAryanakala.Const;
-using ApiAryanakala.Entities;
+using ApiAryanakala.Entities.User;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiAryanakala.Endpoints;
 
@@ -15,7 +17,7 @@ public static class AuthEndpoints
 
         authGroup.MapPost(Constants.Register, RegisterUser);
         authGroup.MapPost(Constants.Login, LogInUser);
-        // authGroup.MapPost(Constants.ChangePassword, ChangePasswordAsync);
+        authGroup.MapPost(Constants.ChangePassword, ChangePasswordAsync).RequireAuthorization();
         authGroup.MapPost(Constants.GenerateRefreshToken, GenerateNewToken);
 
         return apiGroup;
@@ -39,6 +41,18 @@ public static class AuthEndpoints
         IAuthServices authService, UserLogin request)
     {
         var response = await authService.LogInAsync(request.Email, request.Password);
+        return !response.Success ? TypedResults.BadRequest(response) : TypedResults.Ok(response);
+    }
+    private static async Task<Results<Ok<ServiceResponse<bool>>, BadRequest<ServiceResponse<bool>>>>
+        ChangePasswordAsync(IAuthServices authService, ClaimsPrincipal user, [FromBody] string newPassword)
+    {
+        var userId = authService.GetUserId();
+        if (userId == null)
+        {
+            return TypedResults.BadRequest(new ServiceResponse<bool>());
+        }
+
+        var response = await authService.ChangePasswordAsync(userId, newPassword);
         return !response.Success ? TypedResults.BadRequest(response) : TypedResults.Ok(response);
     }
 }

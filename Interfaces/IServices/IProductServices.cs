@@ -1,7 +1,7 @@
-using ApiAryanakala.Entities;
+using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Mapper;
 using ApiAryanakala.Models;
-using ApiAryanakala.Models.DTO.ProductDtos;
+using ApiAryanakala.Models.DTO.ProductDto;
 
 namespace ApiAryanakala.Interfaces.IServices;
 

@@ -1,4 +1,4 @@
-using ApiAryanakala.Entities;
+using ApiAryanakala.Entities.Product;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
