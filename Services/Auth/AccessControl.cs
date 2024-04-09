@@ -6,7 +6,7 @@ public class AccessControl
 {
     public static async Task CheckProductPermissionFlag(HttpContext context, string permissionFlag)
     {
-        var userId = Guid.Parse(context.User.Claims.FirstOrDefault(q => q.Type == "userId").Value);
+        var userId = Guid.Parse(context.User.Claims.FirstOrDefault(q => q.Type == "userId")!.Value);
         var permissionService = context.RequestServices.GetRequiredService<IPermissionService>();
 
         if (!await permissionService.CheckPermission(userId, permissionFlag))

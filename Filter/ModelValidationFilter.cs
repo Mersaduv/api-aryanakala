@@ -15,7 +15,7 @@ public class ModelValidationFilter<T> : IEndpointFilter where T : class
         EndpointFilterDelegate next)
     {
         var model = context.Arguments
-            .FirstOrDefault(a => a.GetType() == typeof(T)) as T;
+            .FirstOrDefault(a => a!.GetType() == typeof(T)) as T;
         if (model is null)
         {
             var errorResponse = GenerateErrorResponse();

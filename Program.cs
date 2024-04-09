@@ -5,7 +5,6 @@ using ApiAryanakala.Endpoints;
 using ApiAryanakala.Models;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     ApplicationName = typeof(Program).Assembly.FullName,
@@ -24,15 +23,7 @@ builder.Services.AddOptions();
 
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWork();
-
 builder.Services.AddApplicationServices(appSettings);
-
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = appSettings.RedisCache.Url;
-    options.InstanceName = appSettings.RedisCache.Prefix;
-});
-
 
 string connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 
@@ -67,14 +58,18 @@ app.UseAuthorization();
 var apiGroup = app.MapGroup(Constants.Api);
 apiGroup
     .MapAuthApi()
-    .ConfigureProductEndpoints()
+    .MapProductApi()
     .MapAddressApi()
     .MapBrandApi()
     .MapCartApi()
     .MapCategoryApi()
     .MapOrderApi()
     .MapPaymentApi()
-    .MapRatingApi();
+    .MapReviewApi()
+    .MapSliderApi()
+    .MapBannerApi()
+    .MapDetailsApi();
+
 app.UseHttpsRedirection();
 
 app.Run();

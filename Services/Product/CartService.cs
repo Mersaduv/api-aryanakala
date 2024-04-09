@@ -3,6 +3,7 @@ using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
+using ApiAryanakala.Models.DTO;
 using ApiAryanakala.Utility;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,7 +46,7 @@ public class CartService : ICartService
                 continue;
             }
 
-            var category = await _categoryService.GetCategoryAsyncBy(item.CategoryId);
+            var category = await _categoryService.GetCategoryAsyncBy(item.CategoryId, null);
             if (category == null)
             {
                 continue;
@@ -55,7 +56,12 @@ public class CartService : ICartService
             {
                 ProductId = product.Id,
                 Title = product.Title,
-                ImageUrl = _byteFileUtility.GetEncryptedFileActionUrl(product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
+                ImageUrl = _byteFileUtility.GetEncryptedFileActionUrl(product.Images.Select(img => new EntityImageDto
+                {
+                    Id = img.Id,
+                    ImageUrl = img.ImageUrl!,
+                    Placeholder = img.Placeholder!
+                }).ToList(), nameof(Product)),
                 Price = product.Price,
                 CategoryName = category.Name,
                 CategoryId = category.Id,

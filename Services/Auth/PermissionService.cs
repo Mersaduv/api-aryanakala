@@ -37,7 +37,7 @@ public class PermissionService : IPermissionService
 
             permissionFlags = await db.RolePermissions
                 .Where(q => roles.Contains(q.RoleId))
-                .Select(q => q.Permission.PermissionFlag)
+                .Select(q => q.Permission!.PermissionFlag)
                 .ToListAsync();
 
             // Serialize data and save it in the cache.
@@ -49,6 +49,6 @@ public class PermissionService : IPermissionService
             await distributedCache.SetStringAsync(permissionCacheKey, serializedData, cacheEntryOptions);
         }
 
-        return permissionFlags.Contains(permissionFlag);
+        return permissionFlags!.Contains(permissionFlag);
     }
 }

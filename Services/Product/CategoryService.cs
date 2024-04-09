@@ -1,11 +1,12 @@
 using ApiAryanakala.Data;
 using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces;
+using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
+using ApiAryanakala.Models.DTO;
 using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Models.DTO.ProductDto.Category;
-using ApiAryanakala.Repository;
 using ApiAryanakala.Utility;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,36 +15,43 @@ namespace ApiAryanakala.Services.Product;
 public class CategoryService : ICategoryService
 {
     private readonly ApplicationDbContext _context;
-    private readonly GenericRepository<Category> _genericRepository;
+    private readonly IGenericRepository<Category> _genericRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ByteFileUtility _byteFileUtility;
+    private readonly IHttpContextAccessor _httpContext;
 
     public CategoryService(ApplicationDbContext context, IUnitOfWork unitOfWork,
-     ByteFileUtility byteFileUtility)
+     ByteFileUtility byteFileUtility, IGenericRepository<Category> genericRepository, IHttpContextAccessor httpContext)
     {
         _context = context;
         _unitOfWork = unitOfWork;
         _byteFileUtility = byteFileUtility;
+        _genericRepository = genericRepository;
+        _httpContext = httpContext;
     }
 
     public async Task<ServiceResponse<CategoryDTO>> Add(CategoryCreateDTO categoryDto)
     {
-        if ((GetBy(categoryDto.Id).GetAwaiter().GetResult()).Data != null)
+        if (GetBy(categoryDto.Id, null).GetAwaiter().GetResult().Data != null)
         {
             return new ServiceResponse<CategoryDTO>
             {
-                Data = new CategoryDTO(),
+                Data = null,
                 Success = false,
                 Message = "Category Name/Id already Exists"
             };
         }
+
         var category = new Category
         {
             Id = categoryDto.Id,
-            Images = _byteFileUtility.SaveFileInFolder<CategoryImage>(categoryDto.Thumbnail, nameof(Category), false),
+            Images = _byteFileUtility.SaveFileInFolder<EntityImage<int, Category>>(categoryDto.Thumbnail!, nameof(Category), false),
             Name = categoryDto.Name,
             Url = categoryDto.Url,
-            ParentCategoryId = categoryDto.ParentCategoryId
+            ParentCategoryId = categoryDto.ParentCategoryId,
+            Colors = new Colors { Start = categoryDto.Colors!.Start, End = categoryDto.Colors.End },
+            Level = categoryDto.Level,
+
         };
         await _context.Categories.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
@@ -54,8 +62,15 @@ public class CategoryService : ICategoryService
             Id = category.Id,
             Name = category.Name,
             Url = category.Url,
-            ImagesSrc = _byteFileUtility.GetEncryptedFileActionUrl(category.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Category)),
+            ImagesSrc = _byteFileUtility.GetEncryptedFileActionUrl(category.Images.Select(img => new EntityImageDto
+            {
+                Id = img.Id,
+                ImageUrl = img.ImageUrl!,
+                Placeholder = img.Placeholder!
+            }).ToList(), nameof(Category)),
             ParentCategoryId = category.ParentCategoryId,
+            Colors = new Colors { Start = category.Colors.Start, End = category.Colors.End },
+            Level = category.Level
             // Omit ChildCategories here to avoid circular reference
         };
 
@@ -68,11 +83,11 @@ public class CategoryService : ICategoryService
     public async Task<ServiceResponse<bool>> Delete(int id)
     {
         var success = false;
-        var category = await GetCategoryAsyncBy(id);
+        var category = await GetCategoryAsyncBy(id, null);
         if (category != null)
         {
             _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             success = true;
         }
         return new ServiceResponse<bool>
@@ -80,39 +95,9 @@ public class CategoryService : ICategoryService
             Data = success
         };
     }
-
-    public async Task<ServiceResponse<List<CategoryDTO>>> GetAll()
+    public async Task<ServiceResponse<CategoryDTO?>> GetBy(int? id, string? slug)
     {
-        var categories = await GetCategoryAsync();
-
-        var categoryDTOs = categories.Select(c => new CategoryDTO
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Url = c.Url,
-            ImagesSrc = _byteFileUtility.GetEncryptedFileActionUrl(c.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Category)),
-            ParentCategoryId = c.ParentCategoryId,
-            ChildCategories = c.ChildCategories?.Select(cc => new CategoryDTO
-            {
-                Id = cc.Id,
-                Name = cc.Name,
-                Url = cc.Url,
-                ParentCategoryId = cc.ParentCategoryId,
-                // Omit ChildCategories here to avoid circular reference
-            }).ToList()
-        }).ToList();
-        var count = await _genericRepository.GetTotalCountAsync();
-        return new ServiceResponse<List<CategoryDTO>>
-        {
-            Count = count,
-            Data = categoryDTOs
-        };
-    }
-
-
-    public async Task<ServiceResponse<CategoryDTO?>> GetBy(int id)
-    {
-        var category = await GetCategoryAsyncBy(id);
+        var category = await GetCategoryAsyncBy(id, slug);
 
         if (category != null)
         {
@@ -121,7 +106,13 @@ public class CategoryService : ICategoryService
                 Id = category.Id,
                 Name = category.Name,
                 Url = category.Url,
-                ImagesSrc = _byteFileUtility.GetEncryptedFileActionUrl(category.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Category)),
+                ImagesSrc = category.Images is not null ? _byteFileUtility.GetEncryptedFileActionUrl(category.Images.Select(img => new EntityImageDto
+                {
+                    Id = img.Id,
+                    ImageUrl = img.ImageUrl!,
+                    Placeholder = img.Placeholder!
+                }).ToList(), nameof(Category)) : null,
+                Colors = new Colors { Start = category.Colors!.Start, End = category.Colors.End },
                 ParentCategoryId = category.ParentCategoryId,
                 ChildCategories = category.ChildCategories?.Select(cc => new CategoryDTO
                 {
@@ -130,7 +121,9 @@ public class CategoryService : ICategoryService
                     Url = cc.Url,
                     ParentCategoryId = cc.ParentCategoryId,
                     // Omit ChildCategories here to avoid circular reference
-                }).ToList()
+                }).ToList(),
+                Level = category.Level,
+
             };
 
             return new ServiceResponse<CategoryDTO?>
@@ -151,7 +144,7 @@ public class CategoryService : ICategoryService
 
     public async Task<ServiceResponse<CategoryDTO>> Update(CategoryUpdateDTO categoryDto)
     {
-        var dbCategory = await GetCategoryAsyncBy(categoryDto.Id);
+        var dbCategory = await GetCategoryAsyncBy(categoryDto.Id, null);
         if (dbCategory == null)
         {
             return new ServiceResponse<CategoryDTO>
@@ -164,6 +157,10 @@ public class CategoryService : ICategoryService
 
         dbCategory.Name = categoryDto.Name;
         dbCategory.Url = categoryDto.Url;
+        dbCategory.Colors = categoryDto.Colors;
+        dbCategory.ParentCategoryId = categoryDto.ParentCategoryId;
+        dbCategory.Level = categoryDto.Level;
+        dbCategory.LastUpdated = DateTime.UtcNow;
         _context.Update(dbCategory);
         await _unitOfWork.SaveChangesAsync();
 
@@ -174,7 +171,14 @@ public class CategoryService : ICategoryService
             Name = dbCategory.Name,
             Url = dbCategory.Url,
             ParentCategoryId = dbCategory.ParentCategoryId,
-            // Omit ChildCategories here to avoid circular reference
+            ImagesSrc =dbCategory.Images is not null ? _byteFileUtility.GetEncryptedFileActionUrl(dbCategory.Images.Select(img => new EntityImageDto
+            {
+                Id = img.Id,
+                ImageUrl = img.ImageUrl!,
+                Placeholder = img.Placeholder!
+            }).ToList(), nameof(Category)) : null,
+            Colors = new Colors { Start = dbCategory.Colors!.Start, End = dbCategory.Colors.End },
+            Level = categoryDto.Level,
         };
 
         return new ServiceResponse<CategoryDTO>
@@ -188,20 +192,34 @@ public class CategoryService : ICategoryService
     {
         var categories = await _context.Categories.Include(c => c.ParentCategory).Include(c => c.Images)
             .ToListAsync();
-
-        var result = categories.Select(c => new CategoryDTO
+        // tree category
+        var result = categories.Select(c1 => new CategoryDTO
         {
-            Id = c.Id,
-            Name = c.Name,
-            Url = c.Url,
-            ParentCategoryId = c.ParentCategoryId,
-            ImagesSrc = _byteFileUtility.GetEncryptedFileActionUrl(c.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Category)),
-            ChildCategories = c.ChildCategories?.Select(cc => new CategoryDTO
+            Id = c1.Id,
+            Name = c1.Name,
+            Url = c1.Url,
+            ParentCategoryId = c1.ParentCategoryId,
+            ImagesSrc =c1.Images is not null ? _byteFileUtility.GetEncryptedFileActionUrl(c1.Images.Select(img => new EntityImageDto
             {
-                Id = cc.Id,
-                Name = cc.Name,
-                Url = cc.Url,
-                ParentCategoryId = cc.ParentCategoryId,
+                Id = img.Id,
+                ImageUrl = img.ImageUrl!,
+                Placeholder = img.Placeholder!
+            }).ToList(), nameof(Category)) : null,
+            Colors = new Colors { Start = c1.Colors!.Start, End = c1.Colors.End },
+            Level = c1.Level,
+            ChildCategories = c1.ChildCategories?.Select(c2 => new CategoryDTO
+            {
+                Id = c2.Id,
+                Name = c2.Name,
+                Url = c2.Url,
+                ParentCategoryId = c2.ParentCategoryId,
+                ChildCategories = c2.ChildCategories?.Select(c3 => new CategoryDTO
+                {
+                    Id = c3.Id,
+                    Name = c3.Name,
+                    Url = c3.Url,
+                    ParentCategoryId = c3.ParentCategoryId,
+                }).ToList()
                 // Omit ChildCategories here to avoid circular reference
             }).ToList(),
         });
@@ -219,15 +237,20 @@ public class CategoryService : ICategoryService
                                                             .Include(c => c.Images)
                                                             .AsNoTracking()
                                                             .ToListAsync();
-    public async Task<Category> GetCategoryAsyncBy(int id) => await _context.Categories
+    public async Task<Category?> GetCategoryAsyncBy(int? id, string? slug)
+    {
+        return await _context.Categories
             .Include(c => c.ChildCategories)
             .Include(c => c.Images)
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(c => !string.IsNullOrEmpty(slug) ? c.Url == slug : (c.Id == id)) ?? null;;
+    }
+
+
     public IEnumerable<int> GetAllChildCategories(int parentCategoryId) =>
         GetAllChildCategoriesHelper(parentCategoryId, null, null);
 
-    public IEnumerable<int> GetAllChildCategoriesHelper(int parentCategoryId, List<Category> allCategories, List<Category> allChildCategories)
+    public IEnumerable<int> GetAllChildCategoriesHelper(int parentCategoryId, List<Category>? allCategories, List<Category>? allChildCategories)
     {
         if (allCategories == null)
         {
@@ -239,22 +262,22 @@ public class CategoryService : ICategoryService
 
         if (childCategories.Count() > 0)
         {
-            allChildCategories.AddRange(childCategories.ToList());
+            allChildCategories!.AddRange(childCategories.ToList());
             foreach (var childCategory in childCategories)
                 GetAllChildCategoriesHelper(childCategory.Id, allCategories, allChildCategories);
         }
-        return allChildCategories.Select(c => c.Id);
+        return allChildCategories!.Select(c => c.Id);
     }
 
     public async Task<ServiceResponse<bool>> UpsertCategoryImages(Thumbnails thumbnails, int id)
     {
-        var dbCategory = await GetCategoryAsyncBy(id);
+        var dbCategory = await GetCategoryAsyncBy(id, null);
 
         if (dbCategory is null)
         {
             return new ServiceResponse<bool> { Success = false, Message = $"{nameof(Category)} not found." };
         }
-        dbCategory.Images.AddRange(_byteFileUtility.SaveFileInFolder<CategoryImage>(thumbnails.Thumbnail, nameof(Category), false));
+        dbCategory.Images!.AddRange(_byteFileUtility.SaveFileInFolder<EntityImage<int, Category>>(thumbnails.Thumbnail!, nameof(Category), false));
         await _unitOfWork.SaveChangesAsync();
         return new ServiceResponse<bool>
         {
@@ -264,7 +287,7 @@ public class CategoryService : ICategoryService
 
     public async Task<ServiceResponse<bool>> DeleteCategoryImages(string fileName)
     {
-        var categoryImageFromStore = _context.CategoryImages.FirstOrDefault(p => p.ThumbnailFileName == fileName);
+        var categoryImageFromStore = _context.CategoryImages.FirstOrDefault(p => p.ImageUrl == fileName);
         if (categoryImageFromStore != null)
         {
             _context.CategoryImages.Remove(categoryImageFromStore);

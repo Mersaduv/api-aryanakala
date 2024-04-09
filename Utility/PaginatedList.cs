@@ -36,9 +36,9 @@ public class PaginatedList<T, K>
                 var context = (ApplicationDbContext)ApplicationDbContext.GetDbContext(source);
                 var orderByProperty = context?.GetPrimaryKey(modelType);
 
-                var property = modelType.GetProperty(orderByProperty);
+                var property = modelType.GetProperty(orderByProperty!);
                 var parameter = Parameter(modelType, "p");
-                var propertyAccess = MakeMemberAccess(parameter, property);
+                var propertyAccess = MakeMemberAccess(parameter, property!);
                 var convertedPropertyAccess = Expression.Convert(propertyAccess, typeof(object));
                 var expr = Lambda<Func<T, object>>(convertedPropertyAccess, parameter);
 

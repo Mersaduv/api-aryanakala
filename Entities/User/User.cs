@@ -1,3 +1,5 @@
+using ApiAryanakala.Entities.Product;
+
 namespace ApiAryanakala.Entities.User;
 
 public class User

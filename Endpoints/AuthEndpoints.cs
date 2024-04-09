@@ -47,7 +47,7 @@ public static class AuthEndpoints
         ChangePasswordAsync(IAuthServices authService, ClaimsPrincipal user, [FromBody] string newPassword)
     {
         var userId = authService.GetUserId();
-        if (userId == null)
+        if (userId == Guid.Empty)
         {
             return TypedResults.BadRequest(new ServiceResponse<bool>());
         }

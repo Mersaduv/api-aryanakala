@@ -19,7 +19,8 @@ namespace ApiAryanakala
     {
         public static void AddRepositories(this IServiceCollection services)
         {
-            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>()
+                    .AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         }
         public static void AddApplicationServices(this IServiceCollection services, AppSettings appSettings)
         {
@@ -28,12 +29,14 @@ namespace ApiAryanakala
         .AddScoped<IPermissionService, PermissionService>()
         .AddScoped<IAuthServices, AuthService>()
         .AddScoped<ICategoryService, CategoryService>()
-        .AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>))
-        .AddScoped<IRatingServices, RatingServices>()
+        // .AddScoped<IRatingServices, RatingServices>()
         .AddScoped<IAddressService, AddressService>()
         .AddScoped<ICartService, CartService>()
-        .AddScoped<IOrderServices, OrderService>();
-        // services.AddScoped<IPaymentService, PaymentService>();
+        .AddScoped<IOrderServices, OrderService>()
+        .AddScoped<ISliderServices, SliderServices>()
+        .AddScoped<IDetailsServices, DetailsServices>()
+        .AddScoped<IBannerServices, BannerServices>();
+            // services.AddScoped<IPaymentService, PaymentService>();
         }
 
         public static void AddUnitOfWork(this IServiceCollection services)

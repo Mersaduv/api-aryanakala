@@ -1,4 +1,6 @@
 using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Interfaces;
+using ApiAryanakala.Models.DTO;
 using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Utility;
 
@@ -13,9 +15,18 @@ public static class GetProductMapper
             Id = product.Id,
             Title = product.Title,
             Code = product.Code,
-            ImagesSrc =byteFileUtility.GetEncryptedFileActionUrl(product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
-
-            ProductAttribute = product.ProductAttribute.Select(infoDto => new ProductAttributeDto
+            ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl
+            (product.Images.Select(img => new EntityImageDto
+            {
+                ImageUrl = img.ImageUrl!,
+                Placeholder = img.Placeholder!
+            }).ToList(), nameof(Product)),
+            Info = product.Info?.Select(infoDto => new ProductAttributeDto
+            {
+                Title = infoDto.Title,
+                Value = infoDto.Value,
+            }).ToList(),
+            Specification = product.Specification?.Select(infoDto => new ProductAttributeDto
             {
                 Title = infoDto.Title,
                 Value = infoDto.Value,
@@ -29,6 +40,8 @@ public static class GetProductMapper
             Size = product.Size,
             Colors = product.Colors,
             Slug = product.Slug,
+            Rating = product.Review?.Average(r => r.Rating),
+            NumReviews = product.Review?.Count,
             Sold = product.Sold,
             Created = product.Created,
             LastUpdated = product.LastUpdated
@@ -42,9 +55,20 @@ public static class GetProductMapper
             {
                 Id = prod.Id,
                 Title = prod.Title,
-                ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl(prod.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
+                ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl
+                (prod.Images.Select(img => new EntityImageDto
+                {
+                    Id = img.Id,
+                    ImageUrl = img.ImageUrl!,
+                    Placeholder = img.Placeholder!
+                }).ToList(), nameof(Product)),
                 Code = prod.Code,
-                ProductAttribute = prod.ProductAttribute.Select(infoDto => new ProductAttributeDto
+                Info = prod.Info?.Select(infoDto => new ProductAttributeDto
+                {
+                    Title = infoDto.Title,
+                    Value = infoDto.Value,
+                }).ToList(),
+                Specification = prod.Specification?.Select(infoDto => new ProductAttributeDto
                 {
                     Title = infoDto.Title,
                     Value = infoDto.Value,
@@ -59,6 +83,8 @@ public static class GetProductMapper
                 Colors = prod.Colors,
                 Slug = prod.Slug,
                 Sold = prod.Sold,
+                Rating = prod.Review?.Average(r => r.Rating),
+                NumReviews = prod.Review?.Count,
                 Created = prod.Created,
                 LastUpdated = prod.LastUpdated
             }).ToList()

@@ -2,6 +2,7 @@ using ApiAryanakala.Data;
 using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
+using ApiAryanakala.Models.DTO;
 using ApiAryanakala.Utility;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,8 +58,12 @@ public class OrderService : IOrderServices
         orderDetailsResponse.Products.Add(new OrderDetailsProductResponse
         {
             ProductId = item.ProductId,
-            ImageUrl = byteFileUtility.GetEncryptedFileActionUrl(item.Product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product)),
-            CategoryName = item.Category.Name,
+            ImageUrl = byteFileUtility.GetEncryptedFileActionUrl(item.Product.Images.Select(img => new EntityImageDto
+            {
+                ImageUrl = img.ImageUrl!,
+                Placeholder = img.Placeholder!
+            }).ToList(), nameof(Product)),
+            CategoryName = item.Category!.Name,
             Quantity = item.Quantity,
             Title = item.Product.Title,
             TotalPrice = item.TotalPrice
@@ -89,7 +94,11 @@ public class OrderService : IOrderServices
                 $"{o.OrderItems.First().Product.Title} and" +
                 $" {o.OrderItems.Count - 1} more..." :
                 o.OrderItems.First().Product.Title,
-            ProductImageUrl = byteFileUtility.GetEncryptedFileActionUrl(o.OrderItems.First().Product.Images.Select(img => img.ThumbnailFileName).ToList(), nameof(Product))
+            ProductImageUrl = byteFileUtility.GetEncryptedFileActionUrl(o.OrderItems.First().Product.Images.Select(img => new EntityImageDto
+            {
+                ImageUrl = img.ImageUrl!,
+                Placeholder = img.Placeholder!
+            }).ToList(), nameof(Product))
         }));
 
         response.Data = orderResponse;
@@ -101,7 +110,7 @@ public class OrderService : IOrderServices
     {
         var products = (await _cartService.GetDbCartProducts(userId)).Data;
         double totalPrice = 0;
-        products.ForEach(product => totalPrice += product.Price * product.Quantity);
+        products!.ForEach(product => totalPrice += product.Price * product.Quantity);
 
         var orderItems = new List<OrderItem>();
         products.ForEach(product => orderItems.Add(new OrderItem

@@ -20,8 +20,12 @@ public class ProductEntityConfiguration : IEntityTypeConfiguration<Product>
               builder.Property(p => p.Discount)
                 .IsRequired(false);
 
-              builder.HasMany(x => x.ProductAttribute)
-              .WithOne(x => x.Products)
+              builder.HasMany(x => x.Info)
+              .WithOne(x => x.ProductsInfo)
+              .HasForeignKey(x => x.ProductId);
+
+              builder.HasMany(x => x.Specification)
+               .WithOne(x => x.ProductsSpecification)
               .HasForeignKey(x => x.ProductId);
 
               builder.HasOne(p => p.Category)
@@ -29,9 +33,18 @@ public class ProductEntityConfiguration : IEntityTypeConfiguration<Product>
                   .HasForeignKey(p => p.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
 
+              builder.OwnsOne(p => p.CategoryLevels);
+
               builder.HasOne(x => x.Brand)
                   .WithMany(x => x.Products)
                  .HasForeignKey(x => x.BrandId);
+
+              builder.HasMany(x =>x.Review)
+                     .WithOne(x=>x.Product)
+                     .HasForeignKey(x=>x.ProductId);
+
+              builder.Property(p => p.OptionType)
+              .HasConversion<string>();
 
               builder.Navigation(p => p.Category)
               .UsePropertyAccessMode(PropertyAccessMode.Property);

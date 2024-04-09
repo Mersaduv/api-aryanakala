@@ -11,22 +11,22 @@ public static class PaymentEndpoints
     {
         var paymentGroup = apiGroup.MapGroup(Constants.Payment);
 
-        paymentGroup.MapPost(Constants.Checkout, CreateCheckoutSessionAsync);
-        paymentGroup.MapPost(string.Empty, FullfillOrderAsync);
+        paymentGroup.MapPost(Constants.Checkout, CreateCheckoutSession);
+        paymentGroup.MapPost(string.Empty, FullfillOrder);
 
         return apiGroup;
     }
-    private static async Task<Ok<string>> CreateCheckoutSessionAsync(IPaymentService paymentService)
+    private static Ok<string> CreateCheckoutSession(IPaymentService paymentService)
     {
-        var session = await paymentService.CreateCheckoutSession();
+        var session = paymentService.CreateCheckoutSession();
         return TypedResults.Ok(string.Empty);
     }
 
-    private static async Task<Results<Ok<ServiceResponse<bool>>, BadRequest<string>>> FullfillOrderAsync(
+    private static Results<Ok<ServiceResponse<bool>>, BadRequest<string>> FullfillOrder(
         IPaymentService paymentService,
         HttpRequest request)
     {
-        var response = await paymentService.FullfillOrderAsync(request);
+        var response = paymentService.FullfillOrder(request);
         return !response.Success
             ? TypedResults.BadRequest(response.Message)
             : TypedResults.Ok(response);

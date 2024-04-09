@@ -90,14 +90,12 @@ namespace ApiAryanakala.Services.Auth
             }
             else
             {
-                // If there is an existing refresh token, update its values
                 currentRefreshToken.RefreshToken = refreshToken;
                 currentRefreshToken.RefreshTokenTimeout = _appSettings.AuthSettings.RefreshTokenTimeout;
                 currentRefreshToken.CreateDate = DateTime.UtcNow;
                 currentRefreshToken.IsValid = true;
             }
 
-            // Save changes to the database
             await _unitOfWork.SaveChangesAsync();
 
             var result = new GenerateNewTokenDTO
@@ -114,8 +112,6 @@ namespace ApiAryanakala.Services.Auth
 
         public async Task<ServiceResponse<Guid>> RegisterAsync(User user, string password)
         {
-            // var salt = encryptionUtility.GetNewSalt();
-            // var hashPassowrd = encryptionUtility.GetSHA256(command.Password, salt);
             if (await UserExistsAsync(user.UserName))
             {
                 return new ServiceResponse<Guid> { Success = false, Message = "User already exists." };
@@ -149,8 +145,8 @@ namespace ApiAryanakala.Services.Auth
                 response.Message = "Wrong password.";
             }
 
-            var token = CreateToken(user);
-            var refreshToken = await GenerateRefreshToken(user.Id);
+            var token = CreateToken(user!);
+            var refreshToken = await GenerateRefreshToken(user!.Id);
 
             // Insert or update refresh token in db
             var userRefreshToken = await _context.UserRefreshTokens
@@ -262,7 +258,7 @@ namespace ApiAryanakala.Services.Auth
             }
             var serializedUser = Encoding.UTF8.GetString(redisUser);
             var userCache = JsonConvert.DeserializeObject<UserCacheDto>(serializedUser);
-            return userCache.UserId;
+            return userCache!.UserId;
         }
 
         public Task<ServiceResponse<bool>> ChangePassword(Guid userId, string newPassword)
@@ -270,9 +266,9 @@ namespace ApiAryanakala.Services.Auth
             throw new NotImplementedException();
         }
 
-        public Guid GetUserId() => Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+        public Guid GetUserId() => Guid.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        public string GetUserEmail() => _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        public string GetUserEmail() => _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Name)!;
 
 
 
@@ -286,7 +282,7 @@ namespace ApiAryanakala.Services.Auth
             return false;
         }
 
-        public async Task<User> GetUserByEmail(string email)
+        public async Task<User?> GetUserByEmail(string email)
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
         }

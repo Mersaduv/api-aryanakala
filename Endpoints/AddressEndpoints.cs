@@ -18,8 +18,8 @@ public static class AddressEndpoints
         return apiGroup;
     }
 
-    private static async Task<ServiceResponse<Address?>> GetAddress(IAddressService addressService) =>
-        await addressService.GetAddress();
+    private static async Task<ServiceResponse<Address>> GetAddress(IAddressService addressService) => await addressService.GetAddress();
+
 
     private static async Task<ServiceResponse<Address>> AddOrUpdateAddress(IAddressService addressService,
         Address address) =>
