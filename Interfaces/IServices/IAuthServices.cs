@@ -12,5 +12,5 @@ public interface IAuthServices
     Task<bool> UserExists(string email);
     Guid GetUserId();
     string GetUserEmail();
-    Task<User> GetUserByEmail(string email);
+    Task<User?> GetUserByEmail(string email);
 }

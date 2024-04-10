@@ -1,4 +1,4 @@
-namespace ApiAryanakala.Entities.Security;
+namespace ApiAryanakala.Entities.User.Security;
 
 public class UserChangePassword
 {

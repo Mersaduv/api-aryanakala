@@ -6,14 +6,19 @@ namespace ApiAryanakala.Utility;
 
 public class ParseHelper
 {
-    public static List<T> ParseData<T>(string productAttributeData) where T : class
+    public static List<T> ParseData<T>(List<string?> productAttributeData) where T : class
     {
+        List<T> myObjectsList = [];
         try
         {
-            string jsonString = $"[{productAttributeData}]";
+            foreach (var item in productAttributeData)
+            {
+                string jsonString = $"[{item}]";
 
-            T[] myObjectsArray = JsonConvert.DeserializeObject<T[]>(jsonString);
-            List<T> myObjectsList = new List<T>(myObjectsArray);
+                T[] myObjectsArray = JsonConvert.DeserializeObject<T[]>(jsonString)!;
+                myObjectsList = new List<T>(myObjectsArray);
+            }
+
             return myObjectsList;
         }
         catch (JsonException)

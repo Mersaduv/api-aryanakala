@@ -3,12 +3,13 @@ using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Enums;
 using ApiAryanakala.Extensions;
 using ApiAryanakala.Models;
+using ApiAryanakala.Models.RequestQuery;
 using System.Linq.Expressions;
 namespace ApiAryanakala.Utility;
 
 public static class QueryHelpers
 {
-    public static IQueryable<T> BuildQuery<T>(IQueryable<T> query, RequestQueryParameters parameters) where T : Product
+    public static IQueryable<T> BuildQuery<T>(IQueryable<T> query, RequestQuery parameters) where T : Product
     {
         if (parameters.Sort.IsNullEmpty().Not() && parameters.SortBy.IsNullEmpty().Not())
         {
@@ -28,7 +29,7 @@ public static class QueryHelpers
 
         return queryable.Expression.Type == typeof(IOrderedQueryable<T>);
     }
-    public static IQueryable<T> BuildPagination<T>(IQueryable<T> query, RequestQueryParameters parameters)
+    public static IQueryable<T> BuildPagination<T>(IQueryable<T> query, RequestQuery parameters)
     {
         if (parameters.Page != default && parameters.PageSize != default)
         {
@@ -62,7 +63,7 @@ public static class QueryHelpers
                     .MakeGenericMethod(entityType, property.PropertyType);
 
                 // Call OrderBy or OrderByDescending on the query
-                query = (IQueryable<T>)orderByMethod.Invoke(null, new object[] { query, orderByExpression });
+                query = (IQueryable<T>)orderByMethod.Invoke(null, new object[] { query, orderByExpression })!;
             }
             else
             {

@@ -26,8 +26,14 @@ public static class Constants
     public const string Images = "images";
     public const string Brand = "brand";
     public const string Brands = "brands";
-    public const string Rating = "rating";
-
+    public const string Details = "details";
+    public const string AllDetails = "all-details";
+    public const string Banner = "banner";
+    public const string Banners = "banners";
+    public const string Review = "review";
+    public const string Reviews = "reviews";
+    public const string Slider = "slider";
+    public const string Sliders = "sliders";
 
     public const string Address = "address";
     public const string Category = "category";
@@ -57,9 +63,11 @@ public static class Constants
     public const string ProductApi = $"{Api}/{Product}";
     public const string ProductImagesApi = $"{ProductApi}/{ProductImages}";
     public const string CategoryImagesApi = $"{CategoryApi}/{CategoryImages}";
-    public const string ProductRatingApi = $"{ProductApi}/{Rating}";
+    public const string ProductReviewApi = $"{ProductApi}/{Review}";
     public const string ProductCategoryApi = $"{ProductApi}/{Category}";
     public const string ProductCategoriesApi = $"{ProductApi}/{Categories}";
     public const string ProductSearchApi = $"{ProductApi}/{Search}";
     public const string ProductSearchSuggestionsApi = $"{ProductApi}/{SearchSuggestions}";
+    public const string SliderCategoryImages = $"{Slider}/{CategoryImages}";
+
 }

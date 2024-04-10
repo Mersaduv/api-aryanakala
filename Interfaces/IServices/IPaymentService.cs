@@ -4,9 +4,9 @@ namespace ApiAryanakala.Interfaces.IServices;
 
 public interface IPaymentService
 {
-    Task<Session> CreateCheckoutSession();
+    Session CreateCheckoutSession();
 
-    Task<ServiceResponse<bool>> FullfillOrderAsync(HttpRequest request);
+    ServiceResponse<bool> FullfillOrder(HttpRequest request);
 }
 
 public class Session

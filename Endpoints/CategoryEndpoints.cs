@@ -3,6 +3,7 @@ using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO.ProductDto;
 using ApiAryanakala.Models.DTO.ProductDto.Category;
+using ApiAryanakala.Models.RequestQuery;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ApiAryanakala.Endpoints;
@@ -20,7 +21,7 @@ public static class CategoryEndpoints
 
         categoryGroup.MapPut(string.Empty, UpdateCategory);
 
-        categoryGroup.MapGet("{id:int}", GetCategory);
+        categoryGroup.MapGet(string.Empty, GetCategory);
 
         categoryGroup.MapDelete("{id:int}", DeleteCategory);
 
@@ -54,14 +55,14 @@ public static class CategoryEndpoints
         return TypedResults.Ok(result);
     }
 
-    private async static Task<Ok<ServiceResponse<CategoryDTO>>> GetCategory(ICategoryService categoryServices,
-     ILogger<Program> _logger, int id)
+    private async static Task<Ok<ServiceResponse<CategoryDTO?>>> GetCategory(ICategoryService categoryServices,
+     ILogger<Program> _logger, [AsParameters] RequestCategoryQuery categoryQuery)
     {
         _logger.Log(LogLevel.Information, "Get Category");
 
         // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
 
-        var result = await categoryServices.GetBy(id);
+        var result = await categoryServices.GetBy(categoryQuery.Id, categoryQuery.Slug);
 
         return TypedResults.Ok(result);
     }

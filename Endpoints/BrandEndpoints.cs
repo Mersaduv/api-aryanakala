@@ -42,7 +42,6 @@ public static class BrandEndpoints
         var result = await productServices.UpdateBrand(brand);
 
         return TypedResults.Ok(result);
-
     }
 
 
@@ -54,7 +53,6 @@ public static class BrandEndpoints
         var result = await productServices.DeleteBrand(id);
 
         return TypedResults.Ok(result);
-
     }
 
     private async static Task<Ok<ServiceResponse<Brand>>> GetBrand(IProductServices productServices, ILogger<Program> _logger, int id)
@@ -64,7 +62,6 @@ public static class BrandEndpoints
         var result = await productServices.GetBrandBy(id);
 
         return TypedResults.Ok(result);
-
     }
 
     private async static Task<Ok<ServiceResponse<IReadOnlyList<Brand>>>> GetAllBrand(IProductServices productServices, ILogger<Program> _logger)
@@ -74,7 +71,6 @@ public static class BrandEndpoints
         var result = await productServices.GetBrands();
 
         return TypedResults.Ok(result);
-
     }
 
 }

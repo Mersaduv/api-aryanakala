@@ -10,12 +10,13 @@ using ApiAryanakala.Const;
 using Microsoft.AspNetCore.Http.HttpResults;
 using ApiAryanakala.Mapper;
 using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Models.RequestQuery;
 
 namespace ApiAryanakala.Endpoints;
 
 public static class ProductEndpoints
 {
-    public static IEndpointRouteBuilder ConfigureProductEndpoints(this IEndpointRouteBuilder apiGroup)
+    public static IEndpointRouteBuilder MapProductApi(this IEndpointRouteBuilder apiGroup)
     {
         var productsGroup = apiGroup.MapGroup(Constants.Products);
         var productGroup = apiGroup.MapGroup(Constants.Product);
@@ -58,13 +59,13 @@ public static class ProductEndpoints
         return apiGroup;
     }
 
-    private static async Task<Ok<ServiceResponse<bool>>> DeleteProductImage(string fileName, IProductServices productServices, ILogger<Program> _logger)
+    private static Ok<ServiceResponse<bool>> DeleteProductImage(string fileName, IProductServices productServices, ILogger<Program> _logger)
     {
         _logger.Log(LogLevel.Information, "Delete Product Images");
 
         // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
 
-        var result = await productServices.DeleteProductImages(fileName);
+        var result = productServices.DeleteProductImages(fileName);
         return TypedResults.Ok(result);
     }
 
@@ -90,7 +91,7 @@ public static class ProductEndpoints
     }
 
 
-    private async static Task<Ok<ServiceResponse<ProductSearchResult>>> GetSearchProducts([AsParameters] RequestSearchQueryParameters parameters, IProductServices productService, ILogger<Program> _logger)
+    private async static Task<Ok<ServiceResponse<ProductSearchResult>>> GetSearchProducts([AsParameters] RequestSearchQuery parameters, IProductServices productService, ILogger<Program> _logger)
     {
         _logger.Log(LogLevel.Information, "Get Products by Search Query");
 
@@ -99,7 +100,7 @@ public static class ProductEndpoints
         return TypedResults.Ok(result);
     }
 
-    private async static Task<Ok<PaginatedList<Product, ProductDTO>>> GetProductQuery([AsParameters] RequestQueryParameters parameters, ApplicationDbContext context, ILogger<Program> _logger)
+    private async static Task<Ok<PaginatedList<Product, ProductDTO>>> GetProductQuery([AsParameters] RequestQuery parameters, ApplicationDbContext context, ILogger<Program> _logger)
     {
         _logger.Log(LogLevel.Information, "Get Products by Query");
         var query = context.Products.AsQueryable();
@@ -138,7 +139,7 @@ public static class ProductEndpoints
 
 
     //Write
-    private static async Task<Ok<ServiceResponse<ProductCreateDTO>>> CreateProduct(IProductRepository _productRepo, IProductServices productServices,
+    private static async Task<Ok<ServiceResponse<ProductDTO>>> CreateProduct(IProductRepository _productRepo, IProductServices productServices,
                   ProductCreateDTO product_C_DTO, ILogger<Program> _logger, HttpContext context)
     {
         _logger.Log(LogLevel.Information, "Create Product");
@@ -184,8 +185,6 @@ public static class ProductEndpoints
     private async static Task<Ok<ServiceResponse<bool>>> DeleteProduct(IProductServices productService, IProductRepository _productRepo, Guid id, IUnitOfWork unitOfWork, ILogger<Program> _logger, HttpContext context)
     {
         _logger.Log(LogLevel.Information, "Delete Product");
-
-        // await AccessControl.CheckProductPermissionFlag(context , "product-get-all");
 
         // await AccessControl.CheckProductPermissionFlag(context, "product-remove");
 

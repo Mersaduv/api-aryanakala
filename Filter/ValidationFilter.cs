@@ -12,7 +12,7 @@ public class GuidValidationFilter : IEndpointFilter
         {
             if (keyValuePair.Key.EndsWith("Id") || keyValuePair.Key == "id")
             {
-                var isValid = IsValidGuid(keyValuePair.Value.ToString());
+                var isValid = IsValidGuid(keyValuePair.Value!.ToString()!);
                 if (!isValid)
                 {
                     var errorResponse = GenerateErrorResponse();

@@ -16,7 +16,12 @@ public static class UpdateProductMapper
             BrandId = product_U_DTO.BrandId,
             Description = product_U_DTO.Description,
             Discount = product_U_DTO.Discount,
-            ProductAttribute = product_U_DTO.ProductAttribute.Select(info => new ProductAttribute
+            Info = product_U_DTO.Info?.Select(info => new ProductAttribute
+            {
+                Title = info.Title,
+                Value = info.Value,
+            }).ToList(),
+            Specification = product_U_DTO.Specification?.Select(info => new ProductAttribute
             {
                 Title = info.Title,
                 Value = info.Value,
@@ -24,7 +29,6 @@ public static class UpdateProductMapper
             Colors = product_U_DTO.Colors,
             InStock = product_U_DTO.InStock,
             Price = product_U_DTO.Price,
-            Rating = product_U_DTO.Rating,
             Size = product_U_DTO.Size,
             Slug = product_U_DTO.Slug,
             Sold = product_U_DTO.Sold,
@@ -43,14 +47,18 @@ public static class UpdateProductMapper
             BrandId = product.BrandId,
             Description = product.Description,
             Discount = product.Discount,
-            ProductAttribute = product.ProductAttribute.Select(infoDto => new ProductAttributeDto
+            Info = product.Info?.Select(infoDto => new ProductAttributeDto
+            {
+                Title = infoDto.Title,
+                Value = infoDto.Value,
+            }).ToList(),
+            Specification = product.Specification?.Select(infoDto => new ProductAttributeDto
             {
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
             InStock = product.InStock,
             Price = product.Price,
-            Rating = product.Rating,
             Size = product.Size,
             Slug = product.Slug,
             Sold = product.Sold,

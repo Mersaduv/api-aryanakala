@@ -1,10 +1,12 @@
+using ApiAryanakala.Models;
+
 namespace ApiAryanakala.Entities.Product;
 
-public class ProductAttribute
+public class ProductAttribute : BaseClass<Guid>
 {
-    public Guid Id { get; set; }
     public Guid ProductId { get; set; }
-    public string Title { get; set; }
-    public string Value { get; set; }
-    public Product Products { get; set; }
+    public required string Title { get; set; }
+    public string? Value { get; set; }
+    public virtual Product? ProductsInfo { get; set; }
+    public virtual Product? ProductsSpecification { get; set; }
 }

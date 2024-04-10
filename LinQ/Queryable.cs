@@ -56,11 +56,11 @@ public static class Queryable
         }
         if (isAscend)
         {
-            query = query.OrderBy(p => EF.Property<object>(p, propertyName));
+            query = query.OrderBy(p => EF.Property<object>(p!, propertyName));
         }
         else
         {
-            query = query.OrderByDescending(p => EF.Property<object>(p, propertyName));
+            query = query.OrderByDescending(p => EF.Property<object>(p!, propertyName));
         }
         return query;
     }

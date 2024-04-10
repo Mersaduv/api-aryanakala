@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Transactions;
 using ApiAryanakala.Data;
 using ApiAryanakala.Entities.Exceptions;
@@ -8,76 +9,70 @@ using ApiAryanakala.Interfaces.IServices;
 using ApiAryanakala.Mapper;
 using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO.ProductDto;
+using ApiAryanakala.Models.RequestQuery;
 using ApiAryanakala.Utility;
+using Microsoft.EntityFrameworkCore;
 namespace ApiAryanakala.Services.Product;
 
 public class ProductServices : IProductServices
 {
-    private readonly IProductRepository productRepository;
-    private readonly ApplicationDbContext applicationDbContext;
-    private readonly IUnitOfWork unitOfWork;
-    private readonly IHttpContextAccessor httpContextAccessor;
-    private readonly ByteFileUtility byteFileUtility;
-    private readonly IGenericRepository<Brand> brandRepository;
-    private readonly IAuthServices authServices;
-
+    private readonly IProductRepository _productRepository;
+    private readonly ApplicationDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ByteFileUtility _byteFileUtility;
+    private readonly IGenericRepository<Brand> _brandRepository;
+    private readonly IAuthServices _authServices;
+    private readonly IHttpContextAccessor _httpContext;
 
     public ProductServices(IProductRepository productRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor,
     ByteFileUtility byteFileUtility,
     IGenericRepository<Brand> brandRepository,
     ApplicationDbContext applicationDbContext,
-    IAuthServices authServices)
+    IAuthServices authServices, IHttpContextAccessor httpContext)
     {
-        this.productRepository = productRepository;
-        this.unitOfWork = unitOfWork;
-        this.httpContextAccessor = httpContextAccessor;
-        this.byteFileUtility = byteFileUtility;
-        this.brandRepository = brandRepository;
-        this.applicationDbContext = applicationDbContext;
-        this.authServices = authServices;
-    }
+        _productRepository = productRepository;
+        _unitOfWork = unitOfWork;
+        _byteFileUtility = byteFileUtility;
+        _brandRepository = brandRepository;
+        _context = applicationDbContext;
+        _authServices = authServices;
+        _httpContext = httpContext;
 
-    public async Task<ServiceResponse<int>> AddBrand(Brand brand)
-    {
-
-        if (brandRepository.GetAsyncBy(brand.Id).GetAwaiter().GetResult() != null)
-        {
-            return new ServiceResponse<int>
-            {
-                Data = 0,
-                Success = false,
-                Message = "Brand Name/Id already Exists"
-            };
-        }
-
-        var result = await brandRepository.Add(brand);
-
-        return new ServiceResponse<int>
-        {
-            Data = result,
-        };
     }
 
 
-    public async Task<ServiceResponse<ProductCreateDTO>> Create(ProductCreateDTO command)
+    public async Task<ServiceResponse<ProductDTO>> Create(ProductCreateDTO productCreateDTO)
     {
-        if (productRepository.GetAsyncBy(command.Title).GetAwaiter().GetResult() != null)
+        if (_productRepository.GetAsyncBy(productCreateDTO.Title).GetAwaiter().GetResult() != null)
         {
-            return new ServiceResponse<ProductCreateDTO>
+            return new ServiceResponse<ProductDTO>
             {
-                Data = new ProductCreateDTO(),
+                Data = null,
                 Success = false,
                 Message = "Product Name/Code already Exists"
             };
         }
-        var product = command.ToProducts(byteFileUtility);
-        await productRepository.CreateAsync(product);
 
-        await unitOfWork.SaveChangesAsync();
+        var product = productCreateDTO.ToProducts(_byteFileUtility);
+        await _productRepository.CreateAsync(product);
+
+        await _unitOfWork.SaveChangesAsync();
 
         var productDTO = product.ToCreateResponse();
 
-        return new ServiceResponse<ProductCreateDTO>
+        var categoryLevelOneId = product.CategoryLevels!.LevelOne;
+        var categoryLevelTwoId = product.CategoryLevels.LevelTwo;
+        var categoryLevelThreeId = product.CategoryLevels.LevelThree;
+        var categoryLevelIds = new List<int> { categoryLevelOneId, categoryLevelTwoId, categoryLevelThreeId };
+
+        var categories = await _context.Categories
+            .Where(c => categoryLevelIds.Contains(c.Id))
+            .ToListAsync();
+
+        productDTO.CategoryLevels = categories;
+        productDTO.CategoryList = categoryLevelIds;
+
+        return new ServiceResponse<ProductDTO>
         {
             Data = productDTO,
         };
@@ -88,13 +83,13 @@ public class ProductServices : IProductServices
         var success = false;
         using (var scope = new TransactionScope())
         {
-            var productFromStore = await productRepository.GetAsyncBy(id);
+            var productFromStore = await _productRepository.GetAsyncBy(id);
             if (productFromStore != null)
             {
                 try
                 {
-                    await productRepository.RemoveAsync(productFromStore);
-                    await unitOfWork.SaveChangesAsync();
+                     _productRepository.Remove(productFromStore);
+                    await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
                     success = true;
                 }
@@ -104,41 +99,16 @@ public class ProductServices : IProductServices
                     throw new CoreException(ex.Message);
                 }
             }
-            else
-            {
-                return new ServiceResponse<bool>
-                {
-                    Success = false,
-                    Data = false,
-                    Message = "Product not found."
-                };
-            }
         }
         return new ServiceResponse<bool> { Data = success };
     }
 
-    public async Task<ServiceResponse<bool>> DeleteBrand(int id)
+    public async Task<ServiceResponse<bool>> Edit(ProductUpdateDTO productUpdateDTO)
     {
         var success = false;
-        var brand = (await GetBrandBy(id)).Data;
-        if (brand != null)
-        {
-            await brandRepository.Delete(brand.Id);
-            await unitOfWork.SaveChangesAsync();
-            success = true;
-        }
-        return new ServiceResponse<bool>
-        {
-            Data = success
-        };
-    }
-
-    public async Task<ServiceResponse<bool>> Edit(ProductUpdateDTO command)
-    {
-        var success = false;
-        var productFromStore = await productRepository.GetAsyncBy(command.Id);
-        var product = command.ToProduct();
-        if (command != null)
+        var productFromStore = await _productRepository.GetAsyncBy(productUpdateDTO.Id);
+        var product = productUpdateDTO.ToProduct();
+        if (productUpdateDTO != null)
         {
             using (var scope = new TransactionScope())
             {
@@ -148,14 +118,19 @@ public class ProductServices : IProductServices
                     {
                         product.Images = productFromStore.Images;
                         product.LastUpdated = DateTime.UtcNow;
-                        await productRepository.UpdateAsync(product);
-                        await unitOfWork.SaveChangesAsync();
+                        _productRepository.Update(product);
+                        await _unitOfWork.SaveChangesAsync();
                         scope.Complete();
                         success = true;
                     }
                     catch (Exception ex)
                     {
-                        throw new CoreException(ex.Message);
+                        return new ServiceResponse<bool>
+                        {
+                            Data = success,
+                            Success = success,
+                            Message = ex.Message
+                        };
                     }
                 }
             }
@@ -178,9 +153,9 @@ public class ProductServices : IProductServices
 
     public async Task<ServiceResponse<GetAllResponse>> GetAll()
     {
-        var products = await productRepository.GetAllAsync();
-        var count = await productRepository.GetTotalCountAsync();
-        var result = products.ToProductsResponse(byteFileUtility);
+        var products = await _productRepository.GetAllAsync();
+        var count = products.Count();
+        var result = products.ToProductsResponse(_byteFileUtility);
         return new ServiceResponse<GetAllResponse>
         {
             Count = count,
@@ -188,31 +163,10 @@ public class ProductServices : IProductServices
         };
     }
 
-    public async Task<ServiceResponse<Brand>> GetBrandBy(int id)
-    {
-        var result = await brandRepository.GetAsyncBy(id);
-        return new ServiceResponse<Brand>
-        {
-            Data = result
-        };
-    }
-
-    public async Task<ServiceResponse<IReadOnlyList<Brand>>> GetBrands()
-    {
-        var result = await brandRepository.GetAllAsync();
-        var count = await brandRepository.GetTotalCountAsync();
-        return new ServiceResponse<IReadOnlyList<Brand>>
-        {
-            Count = count,
-            Data = result
-        };
-    }
-
-
     public async Task<ServiceResponse<GetAllResponse>> GetProductsBy(string categoryUrl)
     {
-        var response = await productRepository.GetProductsAsyncBy(categoryUrl);
-        var result = response.ToProductsResponse(byteFileUtility);
+        var response = await _productRepository.GetProductsAsyncBy(categoryUrl);
+        var result = response.ToProductsResponse(_byteFileUtility);
         return new ServiceResponse<GetAllResponse>
         {
             Data = result
@@ -221,17 +175,17 @@ public class ProductServices : IProductServices
 
     public async Task<ServiceResponse<ProductDTO>> GetSingleProductBy(Guid id)
     {
-        var product = await productRepository.GetAsyncBy(id);
-        var result = product.ToProductResponse(byteFileUtility);
+        var product = await _productRepository.GetAsyncBy(id);
+        var result = product.ToProductResponse(_byteFileUtility);
         return new ServiceResponse<ProductDTO>
         {
             Data = result
         };
     }
 
-    public async Task<ServiceResponse<ProductSearchResult>> SearchProducts(RequestSearchQueryParameters parameters)
+    public async Task<ServiceResponse<ProductSearchResult>> SearchProducts(RequestSearchQuery parameters)
     {
-        var response = await productRepository.SearchProductsAsync(parameters.SearchText, parameters.Page);
+        var response = await _productRepository.SearchProductsAsync(parameters.SearchText, parameters.Page);
 
         return new ServiceResponse<ProductSearchResult>
         {
@@ -242,7 +196,7 @@ public class ProductServices : IProductServices
 
     public async Task<ServiceResponse<List<string>>> SearchSuggestions(string searchText)
     {
-        var response = await productRepository.GetProductSearchSuggestionsAsync(searchText);
+        var response = await _productRepository.GetProductSearchSuggestionsAsync(searchText);
 
         return new ServiceResponse<List<string>>
         {
@@ -250,40 +204,31 @@ public class ProductServices : IProductServices
         };
     }
 
-    public async Task<ServiceResponse<int>> UpdateBrand(Brand brand)
-    {
-        var result = await brandRepository.Update(brand);
-
-        return new ServiceResponse<int>
-        {
-            Data = result,
-        };
-    }
-
     public async Task<ServiceResponse<bool>> UpsertProductImages(Thumbnails thumbnails, Guid id)
     {
-        var userId = authServices.GetUserId();
-        var dbProduct = await productRepository.GetAsyncBy(id);
+        var userId = _authServices.GetUserId();
+        var dbProduct = await _productRepository.GetAsyncBy(id);
 
         if (dbProduct is null)
         {
             return new ServiceResponse<bool> { Success = false, Message = $"{nameof(Product)} not found." };
         }
-        dbProduct.Images.AddRange(byteFileUtility.SaveFileInFolder<ProductImage>(thumbnails.Thumbnail, nameof(Product), false));
-        await unitOfWork.SaveChangesAsync();
+        List<EntityImage<Guid, Entities.Product.Product>> imageList = _byteFileUtility.SaveFileInFolder<EntityImage<Guid, Entities.Product.Product>>(thumbnails.Thumbnail!, nameof(Product), false);
+        dbProduct.Images.AddRange(imageList);
+        await _unitOfWork.SaveChangesAsync();
         return new ServiceResponse<bool>
         {
             Data = true,
         };
     }
 
-    public async Task<ServiceResponse<bool>> DeleteProductImages(string fileName)
+    public ServiceResponse<bool> DeleteProductImages(string fileName)
     {
-        var productImageFromStore = applicationDbContext.ProductImages.FirstOrDefault(p => p.ThumbnailFileName == fileName);
-        var userId = authServices.GetUserId();
+        var productImageFromStore = _context.ProductImages.FirstOrDefault(p => p.ImageUrl == fileName);
+        var userId = _authServices.GetUserId();
         if (productImageFromStore != null)
         {
-            applicationDbContext.ProductImages.Remove(productImageFromStore);
+            _context.ProductImages.Remove(productImageFromStore);
         }
         else
         {
@@ -297,6 +242,73 @@ public class ProductServices : IProductServices
         return new ServiceResponse<bool>
         {
             Data = true,
+        };
+    }
+
+    public async Task<ServiceResponse<int>> AddBrand(Brand brand)
+    {
+        if (await _brandRepository.GetAsyncBy(brand.Id) != null)
+        {
+            return new ServiceResponse<int>
+            {
+                Data = 0,
+                Success = false,
+                Message = "Brand Name/Id already Exists"
+            };
+        }
+
+        var result = await _brandRepository.Add(brand);
+
+        return new ServiceResponse<int>
+        {
+            Data = result,
+        };
+    }
+
+    public async Task<ServiceResponse<bool>> DeleteBrand(int id)
+    {
+        var success = false;
+        var brand = (await GetBrandBy(id)).Data;
+        if (brand != null)
+        {
+            await _brandRepository.Delete(brand.Id);
+            await _unitOfWork.SaveChangesAsync();
+            success = true;
+        }
+        return new ServiceResponse<bool>
+        {
+            Data = success
+        };
+    }
+
+    public async Task<ServiceResponse<Brand>> GetBrandBy(int id)
+    {
+        var result = await _brandRepository.GetAsyncBy(id);
+        return new ServiceResponse<Brand>
+        {
+            Data = result
+        };
+    }
+
+    public async Task<ServiceResponse<IReadOnlyList<Brand>>> GetBrands()
+    {
+        var result = await _brandRepository.GetAllAsync();
+        var count = result.Count;
+        return new ServiceResponse<IReadOnlyList<Brand>>
+        {
+            Count = count,
+            Data = result
+        };
+    }
+
+    public async Task<ServiceResponse<int>> UpdateBrand(Brand brand)
+    {
+        brand.LastUpdated = DateTime.UtcNow;
+        var result = await _brandRepository.Update(brand);
+
+        return new ServiceResponse<int>
+        {
+            Data = result,
         };
     }
 

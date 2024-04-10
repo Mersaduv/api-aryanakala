@@ -1,9 +1,6 @@
-namespace ApiAryanakala.Models.DTO
+namespace ApiAryanakala.Models.DTO;
+
+public class UserCacheDto
 {
-    public class UserCacheDto
-    {
-        public Guid UserId { get; init; }
-
-    }
-
+    public Guid UserId { get; init; }
 }

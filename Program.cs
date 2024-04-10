@@ -5,7 +5,6 @@ using ApiAryanakala.Endpoints;
 using ApiAryanakala.Models;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     ApplicationName = typeof(Program).Assembly.FullName,
@@ -24,15 +23,7 @@ builder.Services.AddOptions();
 
 builder.Services.AddRepositories();
 builder.Services.AddUnitOfWork();
-
 builder.Services.AddApplicationServices(appSettings);
-
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = appSettings.RedisCache.Url;
-    options.InstanceName = appSettings.RedisCache.Prefix;
-});
-
 
 string connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 
@@ -50,14 +41,18 @@ builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddInfraUtility();
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddMemoryCache();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 // if (app.Environment.IsDevelopment())
 // {
 app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api Aryanakala"));
+// app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api Aryanakala"));
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api Aryanakala");
+});
 // }
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod());
 app.UseStaticFiles();
@@ -67,14 +62,18 @@ app.UseAuthorization();
 var apiGroup = app.MapGroup(Constants.Api);
 apiGroup
     .MapAuthApi()
-    .ConfigureProductEndpoints()
+    .MapProductApi()
     .MapAddressApi()
     .MapBrandApi()
     .MapCartApi()
     .MapCategoryApi()
     .MapOrderApi()
     .MapPaymentApi()
-    .MapRatingApi();
+    .MapReviewApi()
+    .MapSliderApi()
+    .MapBannerApi()
+    .MapDetailsApi();
+
 app.UseHttpsRedirection();
 
 app.Run();

@@ -12,12 +12,12 @@ public record PaymentService(
 {
     private const string ClientBaseUrl = @"https://localhost:7177";
 
-    public async Task<Session> CreateCheckoutSession()
+    public Session CreateCheckoutSession()
     {
         throw new NotImplementedException();
     }
 
-    public async Task<ServiceResponse<bool>> FullfillOrderAsync(HttpRequest request)
+    public ServiceResponse<bool> FullfillOrder(HttpRequest request)
     {
         throw new NotImplementedException();
 
