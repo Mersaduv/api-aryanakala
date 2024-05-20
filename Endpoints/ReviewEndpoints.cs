@@ -18,7 +18,7 @@ public static class ReviewEndpoints
         reviewGroup.MapPost(string.Empty, CreateReview);
         reviewGroup.MapGet("/{id:guid}", GetProductReviews);
         reviewGroup.MapDelete("/{id:guid}", DeleteReview);
-        reviewGroup.MapGet("review/{id:guid}", GetReview);
+        reviewGroup.MapGet("single-review/{id:guid}", GetReview);
 
         return apiGroup;
     }

@@ -35,7 +35,7 @@ public static class ProductEndpoints
         productsGroup.MapGet($"/{Constants.SearchSuggestions}", GetSearchSuggestions);
 
 
-        var adminProductGroup = productGroup.MapGroup(string.Empty).RequireAuthorization();
+        var adminProductGroup = productGroup.MapGroup(string.Empty);
         adminProductGroup.MapPost(string.Empty, CreateProduct)
         .AddEndpointFilter<ModelValidationFilter<ProductCreateDTO>>()
         .Accepts<ProductCreateDTO>("multipart/form-data")
@@ -100,14 +100,11 @@ public static class ProductEndpoints
         return TypedResults.Ok(result);
     }
 
-    private async static Task<Ok<PaginatedList<Product, ProductDTO>>> GetProductQuery([AsParameters] RequestQuery parameters, ApplicationDbContext context, ILogger<Program> _logger)
+    private async static Task<Ok<ServiceResponse<PagingModel<ProductDTO>>>> GetProductQuery([AsParameters] RequestQuery parameters, ApplicationDbContext context, IProductServices productService, ILogger<Program> _logger)
     {
         _logger.Log(LogLevel.Information, "Get Products by Query");
-        var query = context.Products.AsQueryable();
 
-        query = QueryHelpers.BuildQuery(query, parameters);
-
-        var result = await PaginatedList<Product, ProductDTO>.CreateAsync(query, parameters.Page, parameters.PageSize);
+        var result = await productService.GetProductQuery(parameters);
 
         return TypedResults.Ok(result);
     }
@@ -139,7 +136,7 @@ public static class ProductEndpoints
 
 
     //Write
-    private static async Task<Ok<ServiceResponse<ProductDTO>>> CreateProduct(IProductRepository _productRepo, IProductServices productServices,
+    private static async Task<Ok<ServiceResponse<bool>>> CreateProduct(IProductRepository _productRepo, IProductServices productServices,
                   ProductCreateDTO product_C_DTO, ILogger<Program> _logger, HttpContext context)
     {
         _logger.Log(LogLevel.Information, "Create Product");

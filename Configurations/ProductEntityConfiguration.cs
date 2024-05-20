@@ -1,5 +1,4 @@
 using ApiAryanakala.Entities.Product;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ApiAryanakala.Configurations;
@@ -21,11 +20,11 @@ public class ProductEntityConfiguration : IEntityTypeConfiguration<Product>
                 .IsRequired(false);
 
               builder.HasMany(x => x.Info)
-              .WithOne(x => x.ProductsInfo)
+              .WithOne(x => x.Product)
               .HasForeignKey(x => x.ProductId);
 
-              builder.HasMany(x => x.Specification)
-               .WithOne(x => x.ProductsSpecification)
+              builder.HasMany(x => x.Specifications)
+               .WithOne(x => x.Product)
               .HasForeignKey(x => x.ProductId);
 
               builder.HasOne(p => p.Category)

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApiAryanakala.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240207203407_MoreAddEntities")]
-    partial class MoreAddEntities
+    [Migration("20240428170148_Init3")]
+    partial class Init3
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,7 +40,7 @@ namespace ApiAryanakala.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FirstName")
@@ -83,7 +83,7 @@ namespace ApiAryanakala.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsPublic")
@@ -101,6 +101,7 @@ namespace ApiAryanakala.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Uri")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -116,7 +117,7 @@ namespace ApiAryanakala.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("LastUpdated")
@@ -158,7 +159,7 @@ namespace ApiAryanakala.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("LastUpdated")
@@ -183,31 +184,6 @@ namespace ApiAryanakala.Migrations
                     b.HasIndex("ParentCategoryId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("ApiAryanakala.Entities.Product.Details", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LastUpdated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("OptionType")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("Details");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Product.EntityImage<System.Guid, ApiAryanakala.Entities.Product.Banner>", b =>
@@ -308,7 +284,7 @@ namespace ApiAryanakala.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("LastUpdated")
@@ -360,7 +336,7 @@ namespace ApiAryanakala.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("BrandId")
+                    b.Property<int?>("BrandId")
                         .HasColumnType("integer");
 
                     b.Property<int>("CategoryId")
@@ -370,7 +346,7 @@ namespace ApiAryanakala.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
@@ -385,6 +361,9 @@ namespace ApiAryanakala.Migrations
 
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("NumReviews")
+                        .HasColumnType("integer");
 
                     b.Property<string>("OptionType")
                         .IsRequired()
@@ -426,14 +405,8 @@ namespace ApiAryanakala.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DetailsId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("DetailsId1")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
@@ -441,7 +414,7 @@ namespace ApiAryanakala.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ProductsInfoId")
+                    b.Property<Guid?>("ProductsInfoId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
@@ -452,10 +425,6 @@ namespace ApiAryanakala.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DetailsId");
-
-                    b.HasIndex("DetailsId1");
 
                     b.HasIndex("ProductId");
 
@@ -488,7 +457,7 @@ namespace ApiAryanakala.Migrations
                     b.ToTable("ProductColor");
                 });
 
-            modelBuilder.Entity("ApiAryanakala.Entities.Product.Rating", b =>
+            modelBuilder.Entity("ApiAryanakala.Entities.Product.Review", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -498,10 +467,7 @@ namespace ApiAryanakala.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ImageUrl")
@@ -511,14 +477,21 @@ namespace ApiAryanakala.Migrations
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Rate")
+                    b.Property<int>("Rating")
                         .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -528,7 +501,7 @@ namespace ApiAryanakala.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Ratings");
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Product.Slider", b =>
@@ -540,7 +513,7 @@ namespace ApiAryanakala.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("Created")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsPublic")
@@ -713,6 +686,31 @@ namespace ApiAryanakala.Migrations
                     b.ToTable("UserRefreshTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ApiAryanakala.Models.DTO.ProductDto.Review.Points", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ReviewId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ReviewId1")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId");
+
+                    b.HasIndex("ReviewId1");
+
+                    b.ToTable("Points");
+                });
+
             modelBuilder.Entity("ApiAryanakala.Entities.Product.Address", b =>
                 {
                     b.HasOne("ApiAryanakala.Entities.User.User", null)
@@ -752,17 +750,6 @@ namespace ApiAryanakala.Migrations
                     b.Navigation("Colors");
 
                     b.Navigation("ParentCategory");
-                });
-
-            modelBuilder.Entity("ApiAryanakala.Entities.Product.Details", b =>
-                {
-                    b.HasOne("ApiAryanakala.Entities.Product.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Product.EntityImage<System.Guid, ApiAryanakala.Entities.Product.Banner>", b =>
@@ -840,9 +827,7 @@ namespace ApiAryanakala.Migrations
                 {
                     b.HasOne("ApiAryanakala.Entities.Product.Brand", "Brand")
                         .WithMany("Products")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BrandId");
 
                     b.HasOne("ApiAryanakala.Entities.Product.Category", "Category")
                         .WithMany("Products")
@@ -876,20 +861,11 @@ namespace ApiAryanakala.Migrations
 
                     b.Navigation("Category");
 
-                    b.Navigation("CategoryLevels")
-                        .IsRequired();
+                    b.Navigation("CategoryLevels");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Product.ProductAttribute", b =>
                 {
-                    b.HasOne("ApiAryanakala.Entities.Product.Details", null)
-                        .WithMany("Info")
-                        .HasForeignKey("DetailsId");
-
-                    b.HasOne("ApiAryanakala.Entities.Product.Details", null)
-                        .WithMany("Specification")
-                        .HasForeignKey("DetailsId1");
-
                     b.HasOne("ApiAryanakala.Entities.Product.Product", "ProductsSpecification")
                         .WithMany("Specification")
                         .HasForeignKey("ProductId")
@@ -898,9 +874,7 @@ namespace ApiAryanakala.Migrations
 
                     b.HasOne("ApiAryanakala.Entities.Product.Product", "ProductsInfo")
                         .WithMany("Info")
-                        .HasForeignKey("ProductsInfoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProductsInfoId");
 
                     b.Navigation("ProductsInfo");
 
@@ -914,10 +888,10 @@ namespace ApiAryanakala.Migrations
                         .HasForeignKey("ProductId");
                 });
 
-            modelBuilder.Entity("ApiAryanakala.Entities.Product.Rating", b =>
+            modelBuilder.Entity("ApiAryanakala.Entities.Product.Review", b =>
                 {
                     b.HasOne("ApiAryanakala.Entities.Product.Product", "Product")
-                        .WithMany()
+                        .WithMany("Review")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -974,6 +948,17 @@ namespace ApiAryanakala.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ApiAryanakala.Models.DTO.ProductDto.Review.Points", b =>
+                {
+                    b.HasOne("ApiAryanakala.Entities.Product.Review", null)
+                        .WithMany("NegativePoints")
+                        .HasForeignKey("ReviewId");
+
+                    b.HasOne("ApiAryanakala.Entities.Product.Review", null)
+                        .WithMany("PositivePoints")
+                        .HasForeignKey("ReviewId1");
+                });
+
             modelBuilder.Entity("ApiAryanakala.Entities.Product.Banner", b =>
                 {
                     b.Navigation("Image")
@@ -994,13 +979,6 @@ namespace ApiAryanakala.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("ApiAryanakala.Entities.Product.Details", b =>
-                {
-                    b.Navigation("Info");
-
-                    b.Navigation("Specification");
-                });
-
             modelBuilder.Entity("ApiAryanakala.Entities.Product.Order", b =>
                 {
                     b.Navigation("OrderItems");
@@ -1014,13 +992,21 @@ namespace ApiAryanakala.Migrations
 
                     b.Navigation("Info");
 
+                    b.Navigation("Review");
+
                     b.Navigation("Specification");
+                });
+
+            modelBuilder.Entity("ApiAryanakala.Entities.Product.Review", b =>
+                {
+                    b.Navigation("NegativePoints");
+
+                    b.Navigation("PositivePoints");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.Product.Slider", b =>
                 {
-                    b.Navigation("Image")
-                        .IsRequired();
+                    b.Navigation("Image");
                 });
 
             modelBuilder.Entity("ApiAryanakala.Entities.User.User", b =>

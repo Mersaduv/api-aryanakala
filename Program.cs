@@ -4,7 +4,6 @@ using ApiAryanakala.Data;
 using ApiAryanakala.Endpoints;
 using ApiAryanakala.Models;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     ApplicationName = typeof(Program).Assembly.FullName,
@@ -42,6 +41,14 @@ builder.Services.AddAuthorization();
 builder.Services.AddInfraUtility();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
+builder.Services.Configure<JsonOptions>(options =>
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

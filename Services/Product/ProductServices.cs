@@ -6,9 +6,11 @@ using ApiAryanakala.Entities.Product;
 using ApiAryanakala.Interfaces;
 using ApiAryanakala.Interfaces.IRepository;
 using ApiAryanakala.Interfaces.IServices;
+using ApiAryanakala.LinQ;
 using ApiAryanakala.Mapper;
 using ApiAryanakala.Models;
 using ApiAryanakala.Models.DTO.ProductDto;
+using ApiAryanakala.Models.DTO.ProductDto.Category;
 using ApiAryanakala.Models.RequestQuery;
 using ApiAryanakala.Utility;
 using Microsoft.EntityFrameworkCore;
@@ -41,40 +43,25 @@ public class ProductServices : IProductServices
     }
 
 
-    public async Task<ServiceResponse<ProductDTO>> Create(ProductCreateDTO productCreateDTO)
+    public async Task<ServiceResponse<bool>> Create(ProductCreateDTO productCreateDTO)
     {
         if (_productRepository.GetAsyncBy(productCreateDTO.Title).GetAwaiter().GetResult() != null)
         {
-            return new ServiceResponse<ProductDTO>
+            return new ServiceResponse<bool>
             {
-                Data = null,
+                Data = false,
                 Success = false,
                 Message = "Product Name/Code already Exists"
             };
         }
-
         var product = productCreateDTO.ToProducts(_byteFileUtility);
         await _productRepository.CreateAsync(product);
 
         await _unitOfWork.SaveChangesAsync();
 
-        var productDTO = product.ToCreateResponse();
-
-        var categoryLevelOneId = product.CategoryLevels!.LevelOne;
-        var categoryLevelTwoId = product.CategoryLevels.LevelTwo;
-        var categoryLevelThreeId = product.CategoryLevels.LevelThree;
-        var categoryLevelIds = new List<int> { categoryLevelOneId, categoryLevelTwoId, categoryLevelThreeId };
-
-        var categories = await _context.Categories
-            .Where(c => categoryLevelIds.Contains(c.Id))
-            .ToListAsync();
-
-        productDTO.CategoryLevels = categories;
-        productDTO.CategoryList = categoryLevelIds;
-
-        return new ServiceResponse<ProductDTO>
+        return new ServiceResponse<bool>
         {
-            Data = productDTO,
+            Data = true,
         };
     }
 
@@ -88,7 +75,7 @@ public class ProductServices : IProductServices
             {
                 try
                 {
-                     _productRepository.Remove(productFromStore);
+                    _productRepository.Remove(productFromStore);
                     await _unitOfWork.SaveChangesAsync();
                     scope.Complete();
                     success = true;
@@ -150,23 +137,84 @@ public class ProductServices : IProductServices
         };
     }
 
-
     public async Task<ServiceResponse<GetAllResponse>> GetAll()
     {
-        var products = await _productRepository.GetAllAsync();
-        var count = products.Count();
-        var result = products.ToProductsResponse(_byteFileUtility);
-        return new ServiceResponse<GetAllResponse>
+        try
         {
-            Count = count,
-            Data = result
-        };
+            var products = await _productRepository.GetAllAsync();
+            var count = products.Count();
+
+            var resultList = products
+                .Select(product =>
+                {
+                    var categoryLevelIds = GetCategoryLevelIds(product.Category!);
+                    var categories = _context.Categories
+                        .Where(c => categoryLevelIds.Contains(c.Id))
+                        .ToList();
+
+                    var result = product.ToProductResponse(_byteFileUtility);
+                    result.CategoryLevels = categories.Select(c => new CategoryDTO
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Url = c.Url,
+                        Level = c.Level,
+                    }).ToList();
+                    result.CategoryList = categoryLevelIds;
+
+                    return result;
+                })
+                .ToList();
+
+            var response = new GetAllResponse
+            {
+                Products = resultList
+            };
+
+            return new ServiceResponse<GetAllResponse>
+            {
+                Data = response,
+                Count = count
+            };
+        }
+        catch (Exception)
+        {
+            return new ServiceResponse<GetAllResponse>
+            {
+                Success = false,
+                Message = "An error occurred while retrieving products."
+            };
+        }
+    }
+
+    private List<int?> GetCategoryLevelIds(Category category)
+    {
+        var categoryLevelIds = new List<int?>();
+
+        if (category?.Level == 1)
+        {
+            categoryLevelIds.Add(category.Id);
+        }
+        else if (category?.Level == 2)
+        {
+            categoryLevelIds.Add(category.ParentCategoryId);
+            categoryLevelIds.Add(category.Id);
+        }
+        else
+        {
+            categoryLevelIds.Add(category?.ParentCategory?.ParentCategoryId);
+            categoryLevelIds.Add(category?.ParentCategoryId);
+            categoryLevelIds.Add(category?.Id);
+        }
+
+        return categoryLevelIds;
     }
 
     public async Task<ServiceResponse<GetAllResponse>> GetProductsBy(string categoryUrl)
     {
         var response = await _productRepository.GetProductsAsyncBy(categoryUrl);
         var result = response.ToProductsResponse(_byteFileUtility);
+
         return new ServiceResponse<GetAllResponse>
         {
             Data = result
@@ -175,12 +223,47 @@ public class ProductServices : IProductServices
 
     public async Task<ServiceResponse<ProductDTO>> GetSingleProductBy(Guid id)
     {
-        var product = await _productRepository.GetAsyncBy(id);
-        var result = product.ToProductResponse(_byteFileUtility);
-        return new ServiceResponse<ProductDTO>
+        try
         {
-            Data = result
-        };
+            var product = await _productRepository.GetAsyncBy(id);
+
+            if (product == null)
+            {
+                return new ServiceResponse<ProductDTO>
+                {
+                    Success = false,
+                    Message = "Product not found."
+                };
+            }
+
+            var categoryLevelIds = GetCategoryLevelIds(product.Category!);
+            var categories = await _context.Categories
+                .Where(c => categoryLevelIds.Contains(c.Id))
+                .ToListAsync();
+
+            var result = product.ToProductResponse(_byteFileUtility);
+            result.CategoryLevels = categories.Select(c => new CategoryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Url = c.Url,
+                Level = c.Level,
+            });
+            result.CategoryList = categoryLevelIds;
+
+            return new ServiceResponse<ProductDTO>
+            {
+                Data = result
+            };
+        }
+        catch (Exception)
+        {
+            return new ServiceResponse<ProductDTO>
+            {
+                Success = false,
+                Message = "An error occurred while retrieving the product."
+            };
+        }
     }
 
     public async Task<ServiceResponse<ProductSearchResult>> SearchProducts(RequestSearchQuery parameters)
@@ -192,6 +275,61 @@ public class ProductServices : IProductServices
             Data = response
         };
     }
+
+    public async Task<ServiceResponse<PagingModel<ProductDTO>>> GetProductQuery(RequestQuery requestQuery)
+    {
+        var query = _context.Products.AsNoTracking();
+
+        // Filter by price range
+        if (requestQuery.MinPrice.HasValue)
+        {
+            query = query.Where(p => p.Price >= requestQuery.MinPrice.Value);
+        }
+        if (requestQuery.MaxPrice.HasValue)
+        {
+            query = query.Where(p => p.Price <= requestQuery.MaxPrice.Value);
+        }
+
+        // Sorting
+        if (!string.IsNullOrEmpty(requestQuery.SortBy) && !string.IsNullOrEmpty(requestQuery.Sort))
+        {
+            switch (requestQuery.Sort.ToLower())
+            {
+                case "asc":
+                    query = query.OrderBy(p => EF.Property<object>(p, requestQuery.SortBy));
+                    break;
+                case "desc":
+                    query = query.OrderByDescending(p => EF.Property<object>(p, requestQuery.SortBy));
+                    break;
+                default:
+                    // Set a default sorting if invalid sort value is provided
+                    query = query.OrderBy(p => p.Id);
+                    break;
+            }
+        }
+        else
+        {
+            // Set a default sorting if sorting parameters are not provided
+            query = query.OrderBy(p => p.Id);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        // Paging
+        if (requestQuery.Page.HasValue && requestQuery.PageSize > 0)
+        {
+            query = query.Skip((requestQuery.Page.Value - 1) * requestQuery.PageSize).Take(requestQuery.PageSize);
+        }
+
+        var products = await query.ToListAsync();
+        var response = products.ToProductsResponse(_byteFileUtility);
+
+        return new ServiceResponse<PagingModel<ProductDTO>>
+        {
+            Data = new PagingModel<ProductDTO>(response.Products, totalCount, requestQuery.Page ?? 1, requestQuery.PageSize)
+        };
+    }
+
 
 
     public async Task<ServiceResponse<List<string>>> SearchSuggestions(string searchText)

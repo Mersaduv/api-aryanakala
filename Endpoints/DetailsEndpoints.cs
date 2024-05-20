@@ -12,17 +12,17 @@ public static class DetailsEndpoints
     {
         var detailsGroup = apiGroup.MapGroup(Constants.Details);
 
-        apiGroup.MapGet(Constants.AllDetails, GetAllDetails);
+        // apiGroup.MapGet(Constants.AllDetails, GetAllDetails);
 
-        detailsGroup.MapPost(string.Empty, CreateDetails);
+        // detailsGroup.MapPost(string.Empty, CreateDetails);
 
-        detailsGroup.MapPut(string.Empty, UpdateDetails);
+        // detailsGroup.MapPut(string.Empty, UpdateDetails);
 
-        detailsGroup.MapGet("single-details/{id:guid}", GetDetails);
+        // detailsGroup.MapGet("single-details/{id:guid}", GetDetails);
 
-        detailsGroup.MapDelete("{id:guid}", DeleteDetails);
+        // detailsGroup.MapDelete("{id:guid}", DeleteDetails);
 
-        detailsGroup.MapGet("{id:int}", GetDetailsByCategory);
+        // detailsGroup.MapGet("{id:int}", GetDetailsByCategory);
 
         return apiGroup;
     }

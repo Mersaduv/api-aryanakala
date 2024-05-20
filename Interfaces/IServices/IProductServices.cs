@@ -8,7 +8,7 @@ namespace ApiAryanakala.Interfaces.IServices;
 
 public interface IProductServices
 {
-    Task<ServiceResponse<ProductDTO>> Create(ProductCreateDTO productCreateDTO);
+    Task<ServiceResponse<bool>> Create(ProductCreateDTO productCreateDTO);
     Task<ServiceResponse<bool>> Edit(ProductUpdateDTO productUpdateDTO);
     Task<ServiceResponse<bool>> Delete(Guid id);
     Task<ServiceResponse<GetAllResponse>> GetAll();
@@ -17,6 +17,7 @@ public interface IProductServices
     Task<ServiceResponse<ProductDTO>> GetSingleProductBy(Guid id);
     Task<ServiceResponse<GetAllResponse>> GetProductsBy(string categoryUrl);
     Task<ServiceResponse<ProductSearchResult>> SearchProducts(RequestSearchQuery parameters);
+    Task<ServiceResponse<PagingModel<ProductDTO>>> GetProductQuery(RequestQuery requestQuery);
     Task<ServiceResponse<List<string>>> SearchSuggestions(string searchText);
     Task<ServiceResponse<int>> AddBrand(Brand brand);
     Task<ServiceResponse<int>> UpdateBrand(Brand brand);

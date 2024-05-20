@@ -6,8 +6,8 @@ namespace ApiAryanakala.Entities.Product;
 public class Details : BaseClass<Guid>
 {
     public int CategoryId { get; set; }
-    public List<ProductAttribute>? Info { get; set; }
-    public List<ProductAttribute>? Specification { get; set; }
+    public List<ProductInfo>? Info { get; set; }
+    public List<ProductSpecification>? Specifications { get; set; }
     public OptionType OptionType { get; set; }
     public virtual Category? Category { get; set; }
 }

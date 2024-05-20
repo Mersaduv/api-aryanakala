@@ -27,10 +27,12 @@ public class ProductRepository : IProductRepository
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
         var productAll = _context.Products.Include(x => x.Info)
-        .Include(x => x.Specification)
+        .Include(x => x.Specifications)
         .Include(x => x.Images)
         .Include(x => x.Colors)
         .Include(x => x.Review)
+        .Include(c=>c.Category)
+        .ThenInclude(x=>x.ParentCategory)
         .AsNoTracking()
         .ToListAsync();
 
@@ -45,7 +47,9 @@ public class ProductRepository : IProductRepository
     public async Task<Product?> GetAsyncBy(Guid id)
     {
         return await _context.Products.Include(x => x.Info)
-        .Include(x => x.Specification)
+        .Include(x=> x.Category)
+        .ThenInclude(x=>x.ParentCategory)
+        .Include(x => x.Specifications)
         .Include(x => x.Images)
         .Include(x => x.Colors)
         .Include(x => x.Review)
@@ -55,7 +59,7 @@ public class ProductRepository : IProductRepository
     public async Task<Product?> GetAsyncBy(string productName)
     {
         return await _context.Products.Include(x => x.Info)
-        .Include(x => x.Specification)
+        .Include(x => x.Specifications)
         .Include(x => x.Images)
         .Include(x => x.Colors)
         .Include(x => x.Review)
@@ -102,7 +106,7 @@ public class ProductRepository : IProductRepository
         IEnumerable<Product> products = await _context.Products
                             .Where(p => p.Title.ToLower().Contains(searchText.ToLower().Trim()) ||
                                 p.Description.ToLower().Contains(searchText.ToLower().Trim()))
-                            .Include(x => x.Info).Include(x => x.Specification).Include(x => x.Images).Include(x => x.Colors)
+                            .Include(x => x.Info).Include(x => x.Specifications).Include(x => x.Images).Include(x => x.Colors)
                             .Skip((page - 1) * (int)pageResults)
                             .Take((int)pageResults)
                             .ToListAsync();
@@ -123,7 +127,7 @@ public class ProductRepository : IProductRepository
         return await _context.Products
                             .Where(p => p.Title.ToLower().Contains(searchText.ToLower().Trim()) ||
                                 p.Description.ToLower().Contains(searchText.ToLower().Trim()))
-                            .Include(x => x.Info).Include(x => x.Specification).Include(x => x.Images).Include(x => x.Colors)
+                            .Include(x => x.Info).Include(x => x.Specifications).Include(x => x.Images).Include(x => x.Colors)
                             .ToListAsync();
     }
 

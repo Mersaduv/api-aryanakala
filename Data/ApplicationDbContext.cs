@@ -14,29 +14,8 @@ public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
-
     }
-    public virtual string GetPrimaryKey(Type entityModelType)
-    {
-        return this.Model
-            .FindEntityType(entityModelType)
-            .FindPrimaryKey().Properties
-            .Select(x => x.Name).Single();
-    }
-
-    public static DbContext GetDbContext(IQueryable query)
-    {
-        var bindingFlags = BindingFlags.NonPublic | BindingFlags.Instance;
-        var queryCompiler = typeof(EntityQueryProvider).GetField("_queryCompiler", bindingFlags).GetValue(query.Provider);
-        var queryContextFactory = queryCompiler.GetType().GetField("_queryContextFactory", bindingFlags).GetValue(queryCompiler);
-
-        var dependencies = typeof(RelationalQueryContextFactory).GetProperty("Dependencies", bindingFlags).GetValue(queryContextFactory);
-        var queryContextDependencies = typeof(DbContext).Assembly.GetType(typeof(QueryContextDependencies).FullName);
-        var stateManagerProperty = queryContextDependencies.GetProperty("StateManager", bindingFlags | BindingFlags.Public).GetValue(dependencies);
-        var stateManager = (IStateManager)stateManagerProperty;
-
-        return stateManager.Context;
-    }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -63,11 +42,10 @@ public class ApplicationDbContext : DbContext
        .HasKey(oi => new { oi.OrderId, oi.ProductId, oi.CategoryId });
 
         modelBuilder.ApplyConfiguration(new ProductEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new ProductAttributeConfiguration());
         modelBuilder.ApplyConfiguration(new ProductBrandConfiguration());
         modelBuilder.ApplyConfiguration(new UserEntityConfiguration());
         modelBuilder.ApplyConfiguration(new UserRefreshTokenEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new DetailsConfiguration());
+        // modelBuilder.ApplyConfiguration(new DetailsConfiguration());
 
     }
 
@@ -78,12 +56,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<EntityImage<Guid, Banner>> BannerImages { get; set; } = default!;
     public DbSet<Slider> Sliders { get; set; } = default!;
     public DbSet<Banner> Banners { get; set; } = default!;
-    public DbSet<Details> Details { get; set; } = default!;
+    // public DbSet<Details> Details { get; set; } = default!;
     public DbSet<Review> Reviews { get; set; } = default!;
     public DbSet<Category> Categories { get; set; } = default!;
     public DbSet<Brand> Brands { get; set; } = default!;
-    public DbSet<ProductAttribute> Info { get; set; } = default!;
-    public DbSet<ProductAttribute> Specification { get; set; } = default!;
+    public DbSet<ProductInfo> ProductInformation { get; set; } = default!;
+    public DbSet<ProductSpecification> ProductSpecification { get; set; } = default!;
     public DbSet<User> Users { get; set; } = default!;
     public DbSet<Address> Addresses { get; set; } = default!;
     public DbSet<Order> Orders { get; set; } = default!;
@@ -93,7 +71,4 @@ public class ApplicationDbContext : DbContext
     public DbSet<Role> Roles { get; set; } = default!;
     public DbSet<RolePermission> RolePermissions { get; set; } = default!;
     public DbSet<UserRole> UserRoles { get; set; } = default!;
-
-
-
 }

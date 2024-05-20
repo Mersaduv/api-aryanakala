@@ -16,12 +16,12 @@ public static class UpdateProductMapper
             BrandId = product_U_DTO.BrandId,
             Description = product_U_DTO.Description,
             Discount = product_U_DTO.Discount,
-            Info = product_U_DTO.Info?.Select(info => new ProductAttribute
+            Info = product_U_DTO.Info?.Select(info => new ProductInfo
             {
                 Title = info.Title,
                 Value = info.Value,
             }).ToList(),
-            Specification = product_U_DTO.Specification?.Select(info => new ProductAttribute
+            Specifications = product_U_DTO.Specification?.Select(info => new ProductSpecification
             {
                 Title = info.Title,
                 Value = info.Value,
@@ -52,7 +52,7 @@ public static class UpdateProductMapper
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
-            Specification = product.Specification?.Select(infoDto => new ProductAttributeDto
+            Specification = product.Specifications?.Select(infoDto => new ProductAttributeDto
             {
                 Title = infoDto.Title,
                 Value = infoDto.Value,

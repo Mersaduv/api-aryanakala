@@ -14,12 +14,11 @@ public class ProductCreateDTO
     public double? Discount { get; set; }
     public required List<IFormFile> Thumbnail { get; set; }
     public int CategoryId { get; set; }
-    public CategoryLevels? CategoryLevels { get; set; }
     public int? BrandId { get; set; }
     public List<ProductColor>? Colors { get; set; }
     public List<string>? Size { get; set; }
     public List<ProductAttributeDto>? Info { get; set; }
-    public List<ProductAttributeDto>? Specification { get; set; }
+    public List<ProductAttributeDto>? Specifications { get; set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }
     // public int? NumReviews { get; set; }
@@ -42,9 +41,9 @@ public class ProductCreateDTO
         var brandId = string.IsNullOrEmpty(form["BrandId"]) ? null : (int?)int.Parse(form["BrandId"]!);
         var sizes = string.IsNullOrEmpty(form["Size"]) ? null : (List<string>?)form["Size"].ToList()!;
         var colors = string.IsNullOrEmpty(form["Colors"]) ? null : (List<string>?)form["Colors"].ToList()!;
-        var productColors = ParseHelper.ParseData<ProductColor>(colors!);
+        var productColors =colors is not null ? ParseHelper.ParseData<ProductColor>(colors!) : null;
         var infoDtoData = ParseHelper.ParseData<ProductAttributeDto>(form["Info"].ToList());
-        var specificationDtoData = ParseHelper.ParseData<ProductAttributeDto>(form["Specification"].ToList());
+        var specificationDtoData = ParseHelper.ParseData<ProductAttributeDto>(form["Specifications"].ToList());
         var inStock = int.Parse(form["InStock"]!);
         var sold = string.IsNullOrEmpty(form["Sold"]) ? null : (int?)int.Parse(form["Sold"]!);
         var created = string.IsNullOrEmpty(form["Created"]) ? null : (DateTime?)DateTime.Parse(form["Created"]!);
@@ -64,7 +63,7 @@ public class ProductCreateDTO
             Size = sizes,
             Colors = productColors,
             Info = infoDtoData,
-            Specification = specificationDtoData,
+            Specifications = specificationDtoData,
             InStock = inStock,
             Sold = sold,
             Created = created,

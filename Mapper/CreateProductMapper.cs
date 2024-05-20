@@ -15,17 +15,18 @@ public static class CreateProductMapper
             Images = byteFileUtility.SaveFileInFolder<EntityImage<Guid, Product>>(product_C_DTO.Thumbnail, nameof(Product), false),//!Boolean true is encrypted and Boolean false is not encrypted
             Code = product_C_DTO.Code,
             CategoryId = product_C_DTO.CategoryId,
-            CategoryLevels = product_C_DTO.CategoryLevels,
             BrandId = product_C_DTO.BrandId,
             Description = product_C_DTO.Description,
             Discount = product_C_DTO.Discount,
-            Info = product_C_DTO.Info!.Select(info => new ProductAttribute
+            Info = product_C_DTO.Info!.Select(info => new ProductInfo
             {
+                Id = Guid.NewGuid(),
                 Title = info.Title,
                 Value = info.Value,
             }).ToList(),
-            Specification = product_C_DTO.Specification!.Select(info => new ProductAttribute
+            Specifications = product_C_DTO.Specifications!.Select(info => new ProductSpecification
             {
+                Id = Guid.NewGuid(),
                 Title = info.Title,
                 Value = info.Value,
             }).ToList(),
@@ -37,7 +38,6 @@ public static class CreateProductMapper
             }).ToList(),
             InStock = product_C_DTO.InStock,
             Price = product_C_DTO.Price,
-            // Rating = product_C_DTO.Rating,
             Size = product_C_DTO.Size,
             Slug = product_C_DTO.Slug,
             Sold = product_C_DTO.Sold,
@@ -60,7 +60,7 @@ public static class CreateProductMapper
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
-            Specification = product.Specification!.Select(infoDto => new ProductAttributeDto
+            Specifications = product.Specifications!.Select(infoDto => new ProductAttributeDto
             {
                 Title = infoDto.Title,
                 Value = infoDto.Value,

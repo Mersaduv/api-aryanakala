@@ -5,7 +5,7 @@ namespace ApiAryanakala.Models.RequestQuery;
 public class RequestQuery
 {
     [FromQuery(Name = "page")]
-    public int Page { get; set; }
+    public int? Page { get; set; }
     [FromQuery(Name = "pagesize")]
     public int PageSize { get; set; }
     public string? SortBy { get; set; }

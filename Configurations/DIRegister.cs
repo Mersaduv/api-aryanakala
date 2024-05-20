@@ -34,7 +34,7 @@ namespace ApiAryanakala
                     .AddScoped<ICartService, CartService>()
                     .AddScoped<IOrderServices, OrderService>()
                     .AddScoped<ISliderServices, SliderServices>()
-                    .AddScoped<IDetailsServices, DetailsServices>()
+                    // .AddScoped<IDetailsServices, DetailsServices>()
                     .AddScoped<IBannerServices, BannerServices>();
             // services.AddScoped<IPaymentService, PaymentService>();
         }

@@ -19,8 +19,8 @@ public class Product : BaseClass<Guid>
     public virtual Brand? Brand { get; set; }
     public List<ProductColor>? Colors { get; set; }
     public List<string>? Size { get; set; }
-    public List<ProductAttribute>? Info { get; set; }
-    public List<ProductAttribute>? Specification { get; set; }
+    public ICollection<ProductInfo>? Info { get; set; } = new List<ProductInfo>();
+    public ICollection<ProductSpecification>? Specifications { get; set; } = new List<ProductSpecification>();
     public int InStock { get; set; }
     public int? Sold { get; set; }
     public double? Rating { get; set; }

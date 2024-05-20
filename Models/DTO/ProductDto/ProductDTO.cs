@@ -1,4 +1,5 @@
 using ApiAryanakala.Entities.Product;
+using ApiAryanakala.Models.DTO.ProductDto.Category;
 
 namespace ApiAryanakala.Models.DTO.ProductDto;
 
@@ -12,14 +13,14 @@ public class ProductDTO
     public double Price { get; set; }
     public string Description { get; set; } = string.Empty;
     public double? Discount { get; set; }
-    public List<int>? CategoryList { get; set; }
-    public List<Entities.Product.Category>? CategoryLevels { get; set; }
+    public List<int?>? CategoryList { get; set; }
+    public IEnumerable<CategoryDTO>? CategoryLevels { get; set; }
     public int CategoryId { get; set; }
     public int? BrandId { get; set; }
     public List<string>? Size { get; set; }
     public List<ProductColor>? Colors { get; set; }
     public List<ProductAttributeDto>? Info { get; set; }
-    public List<ProductAttributeDto>? Specification { get; set; }
+    public List<ProductAttributeDto>? Specifications { get; set; }
     public int InStock { get; set; }
     public int? Sold { get; set; }
     public double? Rating { get; set; }

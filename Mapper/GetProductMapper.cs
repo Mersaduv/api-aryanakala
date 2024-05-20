@@ -18,6 +18,7 @@ public static class GetProductMapper
             ImagesSrc = byteFileUtility.GetEncryptedFileActionUrl
             (product.Images.Select(img => new EntityImageDto
             {
+                Id = img.Id,
                 ImageUrl = img.ImageUrl!,
                 Placeholder = img.Placeholder!
             }).ToList(), nameof(Product)),
@@ -26,7 +27,7 @@ public static class GetProductMapper
                 Title = infoDto.Title,
                 Value = infoDto.Value,
             }).ToList(),
-            Specification = product.Specification?.Select(infoDto => new ProductAttributeDto
+            Specifications = product.Specifications?.Select(infoDto => new ProductAttributeDto
             {
                 Title = infoDto.Title,
                 Value = infoDto.Value,
@@ -40,7 +41,6 @@ public static class GetProductMapper
             Size = product.Size,
             Colors = product.Colors,
             Slug = product.Slug,
-            Rating = product.Review?.Average(r => r.Rating),
             NumReviews = product.Review?.Count,
             Sold = product.Sold,
             Created = product.Created,
@@ -68,7 +68,7 @@ public static class GetProductMapper
                     Title = infoDto.Title,
                     Value = infoDto.Value,
                 }).ToList(),
-                Specification = prod.Specification?.Select(infoDto => new ProductAttributeDto
+                Specifications = prod.Specifications?.Select(infoDto => new ProductAttributeDto
                 {
                     Title = infoDto.Title,
                     Value = infoDto.Value,
@@ -83,7 +83,6 @@ public static class GetProductMapper
                 Colors = prod.Colors,
                 Slug = prod.Slug,
                 Sold = prod.Sold,
-                Rating = prod.Review?.Average(r => r.Rating),
                 NumReviews = prod.Review?.Count,
                 Created = prod.Created,
                 LastUpdated = prod.LastUpdated

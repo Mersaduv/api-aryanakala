@@ -8,11 +8,29 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApiAryanakala.Migrations
 {
     /// <inheritdoc />
-    public partial class InitEntities : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Banners",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Uri = table.Column<string>(type: "text", nullable: false),
+                    IsPublic = table.Column<bool>(type: "boolean", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Banners", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Brands",
                 columns: table => new
@@ -20,7 +38,7 @@ namespace ApiAryanakala.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -50,8 +68,11 @@ namespace ApiAryanakala.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Url = table.Column<string>(type: "text", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Colors_Start = table.Column<string>(type: "text", nullable: true),
+                    Colors_End = table.Column<string>(type: "text", nullable: true),
                     ParentCategoryId = table.Column<int>(type: "integer", nullable: true),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -73,7 +94,7 @@ namespace ApiAryanakala.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TotalPrice = table.Column<double>(type: "double precision", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -116,8 +137,10 @@ namespace ApiAryanakala.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
-                    Uri = table.Column<string>(type: "text", nullable: false),
-                    IsPublic = table.Column<bool>(type: "boolean", nullable: false)
+                    Uri = table.Column<string>(type: "text", nullable: true),
+                    IsPublic = table.Column<bool>(type: "boolean", nullable: false),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -139,6 +162,26 @@ namespace ApiAryanakala.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BannerImages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    Placeholder = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BannerImages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BannerImages_Banners_EntityId",
+                        column: x => x.EntityId,
+                        principalTable: "Banners",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -173,12 +216,17 @@ namespace ApiAryanakala.Migrations
                     Description = table.Column<string>(type: "text", nullable: false),
                     Discount = table.Column<double>(type: "double precision", nullable: true),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
-                    BrandId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryLevels_LevelOne = table.Column<int>(type: "integer", nullable: true),
+                    CategoryLevels_LevelTwo = table.Column<int>(type: "integer", nullable: true),
+                    CategoryLevels_LevelThree = table.Column<int>(type: "integer", nullable: true),
+                    BrandId = table.Column<int>(type: "integer", nullable: true),
                     Size = table.Column<List<string>>(type: "text[]", nullable: true),
                     InStock = table.Column<int>(type: "integer", nullable: false),
                     Sold = table.Column<int>(type: "integer", nullable: true),
                     Rating = table.Column<double>(type: "double precision", nullable: true),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    NumReviews = table.Column<int>(type: "integer", nullable: true),
+                    OptionType = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -188,8 +236,7 @@ namespace ApiAryanakala.Migrations
                         name: "FK_Products_Brands_BrandId",
                         column: x => x.BrandId,
                         principalTable: "Brands",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Products_Categories_CategoryId",
                         column: x => x.CategoryId,
@@ -220,33 +267,6 @@ namespace ApiAryanakala.Migrations
                         name: "FK_RolePermissions_Roles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "Roles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserRoles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId1 = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserRoles", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserRoles_Roles_RoleId",
-                        column: x => x.RoleId,
-                        principalTable: "Roles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserRoles_UserRoles_UserId1",
-                        column: x => x.UserId1,
-                        principalTable: "UserRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -284,7 +304,7 @@ namespace ApiAryanakala.Migrations
                     Zip = table.Column<string>(type: "text", nullable: false),
                     Country = table.Column<string>(type: "text", nullable: false),
                     Id = table.Column<int>(type: "integer", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -315,6 +335,32 @@ namespace ApiAryanakala.Migrations
                     table.PrimaryKey("PK_UserRefreshTokens", x => x.Id);
                     table.ForeignKey(
                         name: "FK_UserRefreshTokens_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserRoles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserRoles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserRoles_Roles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserRoles_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -355,25 +401,31 @@ namespace ApiAryanakala.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductAttributes",
+                name: "ProductAttribute",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Value = table.Column<string>(type: "text", nullable: true),
+                    ProductsInfoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductAttributes", x => x.Id);
+                    table.PrimaryKey("PK_ProductAttribute", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProductAttributes_Products_ProductId",
+                        name: "FK_ProductAttribute_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProductAttribute_Products_ProductsInfoId",
+                        column: x => x.ProductsInfoId,
+                        principalTable: "Products",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -416,30 +468,61 @@ namespace ApiAryanakala.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Ratings",
+                name: "Reviews",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserName = table.Column<string>(type: "text", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
                     Comment = table.Column<string>(type: "text", nullable: false),
-                    Rate = table.Column<int>(type: "integer", nullable: false),
+                    Rating = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     ImageUrl = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Ratings", x => x.Id);
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Ratings_Products_ProductId",
+                        name: "FK_Reviews_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Points",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    ReviewId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ReviewId1 = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Points", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Points_Reviews_ReviewId",
+                        column: x => x.ReviewId,
+                        principalTable: "Reviews",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Points_Reviews_ReviewId1",
+                        column: x => x.ReviewId1,
+                        principalTable: "Reviews",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BannerImages_EntityId",
+                table: "BannerImages",
+                column: "EntityId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_ParentCategoryId",
@@ -462,9 +545,24 @@ namespace ApiAryanakala.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductAttributes_ProductId",
-                table: "ProductAttributes",
+                name: "IX_Points_ReviewId",
+                table: "Points",
+                column: "ReviewId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Points_ReviewId1",
+                table: "Points",
+                column: "ReviewId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductAttribute_ProductId",
+                table: "ProductAttribute",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductAttribute_ProductsInfoId",
+                table: "ProductAttribute",
+                column: "ProductsInfoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductColor_ProductId",
@@ -487,8 +585,8 @@ namespace ApiAryanakala.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Ratings_ProductId",
-                table: "Ratings",
+                name: "IX_Reviews_ProductId",
+                table: "Reviews",
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
@@ -518,9 +616,9 @@ namespace ApiAryanakala.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserRoles_UserId1",
+                name: "IX_UserRoles_UserId",
                 table: "UserRoles",
-                column: "UserId1");
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -528,6 +626,9 @@ namespace ApiAryanakala.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Addresses");
+
+            migrationBuilder.DropTable(
+                name: "BannerImages");
 
             migrationBuilder.DropTable(
                 name: "CartItems");
@@ -539,16 +640,16 @@ namespace ApiAryanakala.Migrations
                 name: "OrderItem");
 
             migrationBuilder.DropTable(
-                name: "ProductAttributes");
+                name: "Points");
+
+            migrationBuilder.DropTable(
+                name: "ProductAttribute");
 
             migrationBuilder.DropTable(
                 name: "ProductColor");
 
             migrationBuilder.DropTable(
                 name: "ProductImages");
-
-            migrationBuilder.DropTable(
-                name: "Ratings");
 
             migrationBuilder.DropTable(
                 name: "RolePermissions");
@@ -563,10 +664,13 @@ namespace ApiAryanakala.Migrations
                 name: "UserRoles");
 
             migrationBuilder.DropTable(
+                name: "Banners");
+
+            migrationBuilder.DropTable(
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "Products");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "Permissions");
@@ -575,10 +679,13 @@ namespace ApiAryanakala.Migrations
                 name: "Sliders");
 
             migrationBuilder.DropTable(
+                name: "Roles");
+
+            migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Roles");
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Brands");
